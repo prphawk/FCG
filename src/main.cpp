@@ -274,9 +274,9 @@ int main(int argc, char* argv[])
     LoadShadersFromFiles();
 
     // Carregamos duas imagens para serem utilizadas como textura
-    LoadTextureImage("../../data/floor.png"); // TextureFloor
-    LoadTextureImage("../../data/norm.png"); // TextureDino
-    LoadTextureImage("../../data/penguin.png"); // TexturePenguin
+    LoadTextureImage("../../data/floor.png"); // TextureImage0
+    LoadTextureImage("../../data/norm.png"); // TextureImage1
+    LoadTextureImage("../../data/penguin.png"); // TextureImage2
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
     ObjModel spheremodel("../../data/sphere.obj");
@@ -639,9 +639,9 @@ void LoadShadersFromFiles()
 
     // Variáveis em "shader_fragment.glsl" para acesso das imagens de textura
     glUseProgram(program_id);
-    glUniform1i(glGetUniformLocation(program_id, "TextureFloor"), 0);
-    glUniform1i(glGetUniformLocation(program_id, "TextureDino"), 1);
-    glUniform1i(glGetUniformLocation(program_id, "TexturePenguin"), 3);
+    glUniform1i(glGetUniformLocation(program_id, "TextureImage0"), 0);
+    glUniform1i(glGetUniformLocation(program_id, "TextureImage1"), 1);
+    glUniform1i(glGetUniformLocation(program_id, "TextureImage2"), 2);
     glUseProgram(0);
 }
 

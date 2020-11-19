@@ -31,9 +31,9 @@ uniform vec4 bbox_min;
 uniform vec4 bbox_max;
 
 // Variáveis para acesso das imagens de textura
-uniform sampler2D TexFloor;
-uniform sampler2D TexDino;
-uniform sampler2D TexPenguin;
+uniform sampler2D TextureImage0; //floor
+uniform sampler2D TextureImage1; //dino
+uniform sampler2D TextureImage2; //penguin
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec3 color;
@@ -82,7 +82,7 @@ void main()
             float phi = asin(p_vetor.y);
             U = (theta + M_PI)/(2*M_PI);
             V = (phi + M_PI_2)/M_PI;
-            Kd0 = texture(TexDino, vec2(U,V)).rgb;
+            Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
             break;
         case BUNNY :
             float minx = bbox_min.x;
@@ -93,22 +93,22 @@ void main()
             float maxz = bbox_max.z;
             U = (position_model.x - minx)/(maxx - minx);
             V = (position_model.y - miny)/(maxy - miny);
-            Kd0 = texture(TexDino, vec2(U,V)).rgb;
+            Kd0 = texture(TextureImage1, vec2(U,V)).rgb;
             break;
         case DINO:
             U = texcoords.x;
             V = texcoords.y;
-            Kd0 = texture(TexDino, vec2(U,V)).rgb;
+            Kd0 = texture(TextureImage1, vec2(U,V)).rgb;
             break;
         case PLANE:
             U = texcoords.x;
             V = texcoords.y;
-            Kd0 = texture(TexFloor, vec2(U,V)).rgb;
+            Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
             break;
         case PENGUIN:
             U = texcoords.x;
             V = texcoords.y;
-            Kd0 = texture(TexPenguin, vec2(U,V)).rgb;
+            Kd0 = texture(TextureImage2, vec2(U,V)).rgb;
             break;
     }
 
