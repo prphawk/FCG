@@ -152,6 +152,8 @@ bool pressing_W = false;
 bool pressing_S = false;
 bool pressing_SPACE = false;
 
+glm::vec4 dinoCoords = glm::vec4(0.0f,-1.0f,0.0f, 0.0f);
+
 // "g_LeftMouseButtonPressed = true" se o usuário está com o botão esquerdo do mouse
 // pressionado no momento atual. Veja função MouseButtonCallback().
 bool g_LeftMouseButtonPressed = false;
@@ -164,17 +166,10 @@ bool g_MiddleMouseButtonPressed = false; // Análogo para botão do meio do mous
 // renderização.
 float g_CameraTheta = 0.0f; // Ângulo no plano ZX em relação ao eixo Z
 float g_CameraPhi = 0.0f;   // Ângulo em relação ao eixo Y
-float g_CameraDistance = 3.5f; // Distância da câmera para a origem
-glm::vec4 DEFAULT_C = glm::vec4(0.0f,0.0f,-g_CameraDistance,1.0f);
+float g_CameraDistance = 5.5f; // Distância da câmera para a origem
+float g_CameraHeight = -50.0f; // Distância da câmera para a origem
+glm::vec4 DEFAULT_C = glm::vec4(0.0f,g_CameraHeight,-g_CameraDistance,1.0f);
 
-
-// Variáveis que controlam rotação do antebraço
-float g_ForearmAngleZ = 0.0f;
-float g_ForearmAngleX = 0.0f;
-
-// Variáveis que controlam translação do torso
-float g_TorsoPositionX = 0.0f;
-float g_TorsoPositionY = 0.0f;
 
 // Variável que controla o tipo de projeção utilizada: perspectiva ou ortográfica.
 bool g_UsePerspectiveProjection = true;
@@ -276,7 +271,7 @@ int main(int argc, char* argv[])
     // Carregamos duas imagens para serem utilizadas como textura
     LoadTextureImage("../../data/tc-earth_daymap_surface.jpg");      // TextureImage0
     LoadTextureImage("../../data/tc-earth_nightmap_citylights.gif"); // TextureImage1
-    LoadTextureImage("../../data/Dino2.jpeg");                       // TextureImageDinoNorm
+    LoadTextureImage("../../data/norm.png");                       // TextureImageDinoNorm
 
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
@@ -365,41 +360,6 @@ int main(int argc, char* argv[])
         // Agora computamos a matriz de Projeção.
         glm::mat4 projection;
 
-        if(g_UseFreeCamera) {
-
-            camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
-            glm::vec4 camera_x_vector   = glm::vec4(1.0f,0.0f,0.0f,0.0f);
-            glm::vec4 camera_z_vector   = glm::vec4(0.0f,0.0f,1.0f,0.0f);
-
-            camera_view_vector = glm::vec4(x,-y,z,0.0f); // Vetor "view", sentido para onde a câmera está virada
-
-            glm::vec4 w_vector = -camera_view_vector / norm(camera_view_vector);
-            glm::vec4 up_cross_w_vector = crossproduct(camera_up_vector, w_vector);
-            glm::vec4 u_vector = up_cross_w_vector / norm(up_cross_w_vector);
-
-            view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
-
-            if(pressing_W) camera_position_c += (noYMatrix * -w_vector) * speed;
-            if(pressing_S) camera_position_c += (noYMatrix * w_vector) * speed;
-            if(pressing_D) camera_position_c += u_vector * speed;
-            if(pressing_A) camera_position_c += -u_vector * speed;
-            if(pressing_SPACE) camera_position_c = DEFAULT_C;
-
-        } else {
-
-            // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
-            // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-            camera_position_c  = glm::vec4(x,y,z,1.0f); // Ponto "c", centro da câmera
-            glm::vec4 camera_lookat_l    = glm::vec4(0.0f,0.0f,0.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
-            camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
-            camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
-
-            // Computamos a matriz "View" utilizando os parâmetros da câmera para
-            // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-            view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
-        }
-
-
         if (g_UsePerspectiveProjection)
         {
             // Projeção Perspectiva.
@@ -421,6 +381,39 @@ int main(int argc, char* argv[])
             projection = Matrix_Orthographic(l, r, b, t, nearplane, farplane);
         }
 
+        if(g_UseFreeCamera) {
+
+            camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
+
+            camera_view_vector = glm::vec4(x,-y,z,0.0f); // Vetor "view", sentido para onde a câmera está virada
+
+            glm::vec4 w_vector = -camera_view_vector / norm(camera_view_vector);
+            glm::vec4 up_cross_w_vector = crossproduct(camera_up_vector, w_vector);
+            glm::vec4 u_vector = up_cross_w_vector / norm(up_cross_w_vector);
+
+            view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
+
+            if(pressing_W) camera_position_c += (noYMatrix * -w_vector) * speed;
+            if(pressing_S) camera_position_c += (noYMatrix * w_vector) * speed;
+            if(pressing_D) camera_position_c += u_vector * speed;
+            if(pressing_A) camera_position_c += -u_vector * speed;
+            if(pressing_SPACE) camera_position_c = DEFAULT_C;
+
+
+        } else {
+
+            // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
+            // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
+            camera_position_c  = glm::vec4(x,y,z,1.0f); // Ponto "c", centro da câmera
+            glm::vec4 camera_lookat_l = glm::vec4(0.0f,0.0f, 0.0f, 1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
+            camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
+            camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
+
+            // Computamos a matriz "View" utilizando os parâmetros da câmera para
+            // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
+            view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
+        }
+
         glm::mat4 model = Matrix_Identity(); // Transformação identidade de modelagem
 
         // Enviamos as matrizes "view" e "projection" para a placa de vídeo
@@ -433,7 +426,6 @@ int main(int argc, char* argv[])
         #define BUNNY  1
         #define PLANE  2
         #define DINO  3
-
 
         // Desenhamos o modelo da esfera
         model = Matrix_Translate(-1.0f,0.0f,0.0f)
@@ -459,7 +451,9 @@ int main(int argc, char* argv[])
         DrawVirtualObject("plane");
 
         // Desenhamos o dino
-        model = Matrix_Translate(2.0f,-1.0f,1.0f) * Matrix_Scale(2.0f, 2.0f, 2.0f);
+        model = Matrix_Translate(dinoCoords.x, dinoCoords.y, dinoCoords.z)
+        * Matrix_Scale(2.0f, 2.0f, 2.0f);
+        //* Matrix_Rotate_Y(-z);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, DINO);
         DrawVirtualObject("dino");
@@ -1141,10 +1135,6 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
         float dx = xpos - g_LastCursorPosX;
         float dy = ypos - g_LastCursorPosY;
 
-        // Atualizamos parâmetros da antebraço com os deslocamentos
-        g_ForearmAngleZ -= 0.01f*dx;
-        g_ForearmAngleX += 0.01f*dy;
-
         // Atualizamos as variáveis globais para armazenar a posição atual do
         // cursor como sendo a última posição conhecida do cursor.
         g_LastCursorPosX = xpos;
@@ -1156,10 +1146,6 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
         // Deslocamento do cursor do mouse em x e y de coordenadas de tela!
         float dx = xpos - g_LastCursorPosX;
         float dy = ypos - g_LastCursorPosY;
-
-        // Atualizamos parâmetros da antebraço com os deslocamentos
-        g_TorsoPositionX += 0.01f*dx;
-        g_TorsoPositionY -= 0.01f*dy;
 
         // Atualizamos as variáveis globais para armazenar a posição atual do
         // cursor como sendo a última posição conhecida do cursor.
@@ -1231,10 +1217,6 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         g_AngleX = 0.0f;
         g_AngleY = 0.0f;
         g_AngleZ = 0.0f;
-        g_ForearmAngleX = 0.0f;
-        g_ForearmAngleZ = 0.0f;
-        g_TorsoPositionX = 0.0f;
-        g_TorsoPositionY = 0.0f;
     }
 
     // Se o usuário apertar a tecla P, utilizamos projeção perspectiva.

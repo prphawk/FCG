@@ -33,7 +33,7 @@ uniform vec4 bbox_max;
 // Variáveis para acesso das imagens de textura
 uniform sampler2D TextureImage0; //dia
 uniform sampler2D TextureImage1; //noite
-uniform sampler2D TextureImageDino;
+uniform sampler2D TextureImage2;
 
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
@@ -137,7 +137,7 @@ void main()
 
     vec3 Kd1 = texture(TextureImage1, vec2(U,V)).rgb;
 
-    vec3 Kd2 = texture(TextureImageDino, vec2(U,V)).rgb;
+    vec3 Kd2 = texture(TextureImage2, vec2(U,V)).rgb;
 
     // Equação de Iluminação
     float lambert = max(0,dot(n,l));
