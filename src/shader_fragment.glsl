@@ -22,6 +22,8 @@ uniform mat4 projection;
 #define SPHERE 0
 #define BUNNY  1
 #define PLANE  2
+#define DINO  3
+
 uniform int object_id;
 
 // Parâmetros da axis-aligned bounding box (AABB) do modelo
@@ -31,7 +33,8 @@ uniform vec4 bbox_max;
 // Variáveis para acesso das imagens de textura
 uniform sampler2D TextureImage0; //dia
 uniform sampler2D TextureImage1; //noite
-uniform sampler2D TextureImage2;
+uniform sampler2D TextureImageDino;
+
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec3 color;
@@ -122,7 +125,7 @@ void main()
         V = (position_model.y - miny)/(maxy - miny);
 
     }
-    else if ( object_id == PLANE )
+    else if ( object_id == PLANE ||  object_id == DINO)
     {
         // Coordenadas de textura do plano, obtidas do arquivo OBJ.
         U = texcoords.x;
@@ -134,11 +137,12 @@ void main()
 
     vec3 Kd1 = texture(TextureImage1, vec2(U,V)).rgb;
 
+    vec3 Kd2 = texture(TextureImageDino, vec2(U,V)).rgb;
 
     // Equação de Iluminação
     float lambert = max(0,dot(n,l));
 
-    color = Kd0 * (lambert + 0.01) +  Kd1 * (0.8 - lambert);
+    color = Kd2 * (lambert + 0.01);// +  Kd1 * (0.8 - lambert);
 
     // Cor final com correção gamma, considerando monitor sRGB.
     // Veja https://en.wikipedia.org/w/index.php?title=Gamma_correction&oldid=751281772#Windows.2C_Mac.2C_sRGB_and_TV.2Fvideo_standard_gammas
