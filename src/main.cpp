@@ -102,6 +102,7 @@ void TextRendering_ShowEulerAngles(GLFWwindow* window);
 void TextRendering_ShowProjection(GLFWwindow* window);
 void TextRendering_ShowFramesPerSecond(GLFWwindow* window);
 void TextRendering_ShowDirectionKey(GLFWwindow* window);
+void TextRendering_ShowCameraMode(GLFWwindow* window);
 
 // Funções callback para comunicação com o sistema operacional e interação do
 // usuário. Veja mais comentários nas definições das mesmas, abaixo.
@@ -369,10 +370,7 @@ int main(int argc, char* argv[])
             glm::vec4 w_vector = -camera_view_vector / norm(camera_view_vector);
             glm::vec4 up_cross_w_vector = crossproduct(camera_up_vector, w_vector);
             glm::vec4 u_vector = up_cross_w_vector / norm(up_cross_w_vector);
-            //glm::vec4 v_vector = crossproduct(w_vector, u_vector);
 
-            // Computamos a matriz "View" utilizando os parâmetros da câmera para
-            // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
             view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
 
             if(pressing_W) camera_position_c += (noYMatrix * -w_vector) * speed;
@@ -471,6 +469,7 @@ int main(int argc, char* argv[])
         TextRendering_ShowFramesPerSecond(window);
 
         TextRendering_ShowDirectionKey(window);
+        TextRendering_ShowCameraMode(window);
 
 
         // O framebuffer onde OpenGL executa as operações de renderização não
@@ -1396,10 +1395,10 @@ void TextRendering_ShowCameraMode(GLFWwindow* window)
     float lineheight = TextRendering_LineHeight(window);
     float charwidth = TextRendering_CharWidth(window);
 
-    if ( g_UsePerspectiveProjection )
-        TextRendering_PrintString(window, "Perspective", 1.0f-13*charwidth, -1.0f+2*lineheight/10, 1.0f);
+    if ( g_UseFreeCamera )
+        TextRendering_PrintString(window, "Free Camera", 1.0f-13*charwidth, -1.0f+12*lineheight/10, 1.0f);
     else
-        TextRendering_PrintString(window, "Orthographic", 1.0f-13*charwidth, -1.0f+2*lineheight/10, 1.0f);
+        TextRendering_PrintString(window, "Look-At Camera", 1.0f-16*charwidth, -1.0f+12*lineheight/10, 1.0f);
 }
 
 void TextRendering_ShowDirectionKey(GLFWwindow* window)
