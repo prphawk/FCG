@@ -69,8 +69,7 @@ void main()
     // Coordenadas de textura U e V
     float U = 0.0;
     float V = 0.0;
-
-    uniform sampler2D *Img = NULL;
+    vec3 Kd0;
 
     switch(object_id)
     {
@@ -83,9 +82,8 @@ void main()
             float phi = asin(p_vetor.y);
             U = (theta + M_PI)/(2*M_PI);
             V = (phi + M_PI_2)/M_PI;
-            Img = &TexDino;
-        break;
-
+            Kd0 = texture(TexDino, vec2(U,V)).rgb;
+            break;
         case BUNNY :
             float minx = bbox_min.x;
             float maxx = bbox_max.x;
@@ -95,26 +93,24 @@ void main()
             float maxz = bbox_max.z;
             U = (position_model.x - minx)/(maxx - minx);
             V = (position_model.y - miny)/(maxy - miny);
-            Img = &TexDino;
+            Kd0 = texture(TexDino, vec2(U,V)).rgb;
+            break;
         case DINO:
             U = texcoords.x;
             V = texcoords.y;
-            Img = &TexDino;
+            Kd0 = texture(TexDino, vec2(U,V)).rgb;
             break;
         case PLANE:
             U = texcoords.x;
             V = texcoords.y;
-            Img = &TexFloor;
+            Kd0 = texture(TexFloor, vec2(U,V)).rgb;
             break;
         case PENGUIN:
             U = texcoords.x;
-            V = texcoords.y;  
-            Img = &TexPenguin;
+            V = texcoords.y;
+            Kd0 = texture(TexPenguin, vec2(U,V)).rgb;
             break;
     }
-    // Obtemos a refletância difusa a partir da leitura da imagem TextureImage0
-
-    vec3 Kd0 = texture(Img, vec2(U,V)).rgb;
 
 
     // Equação de Iluminação
