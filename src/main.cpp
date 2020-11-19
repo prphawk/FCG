@@ -272,6 +272,8 @@ int main(int argc, char* argv[])
     LoadTextureImage("../../data/tc-earth_daymap_surface.jpg");      // TextureImage0
     LoadTextureImage("../../data/tc-earth_nightmap_citylights.gif"); // TextureImage1
     LoadTextureImage("../../data/norm.png");                       // TextureImageDinoNorm
+    LoadTextureImage("../../data/floor.png"); // TextureImage0
+    LoadTextureImage("../../data/penguin.png"); // TextureImage2
 
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
@@ -425,7 +427,8 @@ int main(int argc, char* argv[])
         #define SPHERE 0
         #define BUNNY  1
         #define PLANE  2
-        #define DINO  3
+        #define DINO   3
+        #define PENGUIN  4
 
         // Desenhamos o modelo da esfera
         model = Matrix_Translate(-1.0f,0.0f,0.0f)
