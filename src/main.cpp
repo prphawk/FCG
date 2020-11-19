@@ -188,6 +188,8 @@ float g_TorsoPositionY = 0.0f;
 // Variável que controla o tipo de projeção utilizada: perspectiva ou ortográfica.
 bool g_UsePerspectiveProjection = true;
 
+bool g_UseFreeCamera = false;
+
 // Variável que controla se o texto informativo será mostrado na tela.
 bool g_ShowInfoText = true;
 
@@ -318,6 +320,13 @@ int main(int argc, char* argv[])
     // Ficamos em loop, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
+
+        // Note que, no sistema de coordenadas da câmera, os planos near e far
+        // estão no sentido negativo! Veja slides 176-204 do documento Aula_09_Projecoes.pdf.
+        float nearplane = -0.1f;  // Posição do "near plane"
+        float farplane  = -50.0f; // Posição do "far plane"
+        float speed = 0.1f;
+
         // Aqui executamos as operações de renderização
 
         // Definimos a cor do "fundo" do framebuffer como branco.  Tal cor é
@@ -326,7 +335,7 @@ int main(int argc, char* argv[])
         // Conversaremos sobre sistemas de cores nas aulas de Modelos de Iluminação.
         //
         //           R     G     B     A
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        glClearColor(0.9f, 1.0f, 1.0f, 1.0f);
 
         // "Pintamos" todos os pixels do framebuffer com a cor definida acima,
         // e também resetamos todos os pixels do Z-buffer (depth buffer).
@@ -345,67 +354,47 @@ int main(int argc, char* argv[])
         float z = r*cos(g_CameraPhi)*cos(g_CameraTheta);
         float x = r*cos(g_CameraPhi)*sin(g_CameraTheta);
 
-        // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
-        // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-        glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
-        //glm::vec4 camera_lookat_l    = glm::vec4(0.0f,0.0f,0.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
-        //glm::vec4 camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
-        glm::vec4 camera_view_vector = glm::vec4(x,-y,z,0.0f); // Vetor "view", sentido para onde a câmera está virada
-
-        glm::vec4 w_vector = -camera_view_vector / norm(camera_view_vector);
-        glm::vec4 up_cross_w_vector = crossproduct(camera_up_vector, w_vector);
-        glm::vec4 u_vector = up_cross_w_vector / norm(up_cross_w_vector);
-        //glm::vec4 v_vector = crossproduct(w_vector, u_vector);
-
-        // Computamos a matriz "View" utilizando os parâmetros da câmera para
-        // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-        glm::mat4 view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
+        glm::vec4 camera_up_vector;
+        glm::vec4 camera_view_vector;
+        glm::mat4 view;
 
         // Agora computamos a matriz de Projeção.
         glm::mat4 projection;
 
-        // Note que, no sistema de coordenadas da câmera, os planos near e far
-        // estão no sentido negativo! Veja slides 176-204 do documento Aula_09_Projecoes.pdf.
-        float nearplane = -0.1f;  // Posição do "near plane"
-        float farplane  = -30.0f; // Posição do "far plane"
-        float speed = 0.1f;
+        if(g_UseFreeCamera) {
 
-        if(pressing_W) {
-            camera_position_c += -w_vector * speed;
-        }
-        if(pressing_S) {
-            camera_position_c += w_vector * speed;
-        }
-        if(pressing_D) {
-            camera_position_c += u_vector * speed;
-        }
-        if(pressing_A) {
-            camera_position_c += -u_vector * speed;
-        }
-        if(pressing_SPACE) {
-            camera_position_c = DEFAULT_C;
+            camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
+            camera_view_vector = glm::vec4(x,-y,z,0.0f); // Vetor "view", sentido para onde a câmera está virada
+
+            glm::vec4 w_vector = -camera_view_vector / norm(camera_view_vector);
+            glm::vec4 up_cross_w_vector = crossproduct(camera_up_vector, w_vector);
+            glm::vec4 u_vector = up_cross_w_vector / norm(up_cross_w_vector);
+            //glm::vec4 v_vector = crossproduct(w_vector, u_vector);
+
+            // Computamos a matriz "View" utilizando os parâmetros da câmera para
+            // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
+            view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
+
+            if(pressing_W) camera_position_c += -w_vector * speed;
+            if(pressing_S) camera_position_c += w_vector * speed;
+            if(pressing_D) camera_position_c += u_vector * speed;
+            if(pressing_A) camera_position_c += -u_vector * speed;
+            if(pressing_SPACE) camera_position_c = DEFAULT_C;
+
+        } else {
+
+            // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
+            // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
+            camera_position_c  = glm::vec4(x,y,z,1.0f); // Ponto "c", centro da câmera
+            glm::vec4 camera_lookat_l    = glm::vec4(0.0f,0.0f,0.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
+            camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
+            camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
+
+            // Computamos a matriz "View" utilizando os parâmetros da câmera para
+            // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
+            view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
         }
 
-        /*
-        // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
-        // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-        glm::vec4 camera_position_c  = glm::vec4(x,y,z,1.0f); // Ponto "c", centro da câmera
-        glm::vec4 camera_lookat_l    = glm::vec4(0.0f,0.0f,0.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
-        glm::vec4 camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
-        glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
-        */
-
-        // Computamos a matriz "View" utilizando os parâmetros da câmera para
-        // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-        //glm::mat4 view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
-
-        // Agora computamos a matriz de Projeção.
-        //glm::mat4 projection;
-
-        // Note que, no sistema de coordenadas da câmera, os planos near e far
-        // estão no sentido negativo! Veja slides 176-204 do documento Aula_09_Projecoes.pdf.
-        //float nearplane = -0.1f;  // Posição do "near plane"
-        //float farplane  = -30.0f; // Posição do "far plane"
 
         if (g_UsePerspectiveProjection)
         {
@@ -1253,6 +1242,12 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         g_ShowInfoText = !g_ShowInfoText;
     }
 
+    // Se o usuário apertar a tecla H, fazemos um "toggle" do texto informativo mostrado na tela.
+    if (key == GLFW_KEY_C && action == GLFW_PRESS)
+    {
+        g_UseFreeCamera = !g_UseFreeCamera;
+    }
+
     // Se o usuário apertar a tecla R, recarregamos os shaders dos arquivos "shader_fragment.glsl" e "shader_vertex.glsl".
     if (key == GLFW_KEY_R && action == GLFW_PRESS)
     {
@@ -1379,6 +1374,21 @@ void TextRendering_ShowEulerAngles(GLFWwindow* window)
 
 // Escrevemos na tela qual matriz de projeção está sendo utilizada.
 void TextRendering_ShowProjection(GLFWwindow* window)
+{
+    if ( !g_ShowInfoText )
+        return;
+
+    float lineheight = TextRendering_LineHeight(window);
+    float charwidth = TextRendering_CharWidth(window);
+
+    if ( g_UsePerspectiveProjection )
+        TextRendering_PrintString(window, "Perspective", 1.0f-13*charwidth, -1.0f+2*lineheight/10, 1.0f);
+    else
+        TextRendering_PrintString(window, "Orthographic", 1.0f-13*charwidth, -1.0f+2*lineheight/10, 1.0f);
+}
+
+// Escrevemos na tela qual matriz de projeção está sendo utilizada.
+void TextRendering_ShowCameraMode(GLFWwindow* window)
 {
     if ( !g_ShowInfoText )
         return;
