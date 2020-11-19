@@ -1,6 +1,6 @@
-# Blender v2.79 (sub 0) OBJ File: 'PenguinBaseMesh.blend'
+# Blender v2.79 (sub 0) OBJ File: 'penguin.blend'
 # www.blender.org
-mtllib PenguinBaseMesh.mtl
+mtllib penguin.mtl
 o Penguin_Cylinder
 v 0.003100 0.013390 -0.147620
 v 0.014914 0.064234 -0.378347
