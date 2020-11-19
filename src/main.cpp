@@ -111,6 +111,7 @@ void TextRendering_ShowModelViewProjection(GLFWwindow* window, glm::mat4 project
 void TextRendering_ShowEulerAngles(GLFWwindow* window);
 void TextRendering_ShowProjection(GLFWwindow* window);
 void TextRendering_ShowFramesPerSecond(GLFWwindow* window);
+void TextRendering_ShowDirectionKey(GLFWwindow* window);
 
 // Funções callback para comunicação com o sistema operacional e interação do
 // usuário. Veja mais comentários nas definições das mesmas, abaixo.
@@ -153,6 +154,13 @@ float g_AngleX = 0.0f;
 float g_AngleY = 0.0f;
 float g_AngleZ = 0.0f;
 
+// mover a camera
+bool pressing_D = false;
+bool pressing_A = false;
+bool pressing_W = false;
+bool pressing_S = false;
+bool pressing_SPACE = false;
+
 // "g_LeftMouseButtonPressed = true" se o usuário está com o botão esquerdo do mouse
 // pressionado no momento atual. Veja função MouseButtonCallback().
 bool g_LeftMouseButtonPressed = false;
@@ -166,6 +174,8 @@ bool g_MiddleMouseButtonPressed = false; // Análogo para botão do meio do mous
 float g_CameraTheta = 0.0f; // Ângulo no plano ZX em relação ao eixo Z
 float g_CameraPhi = 0.0f;   // Ângulo em relação ao eixo Y
 float g_CameraDistance = 3.5f; // Distância da câmera para a origem
+glm::vec4 DEFAULT_C = glm::vec4(0.0f,0.0f,-g_CameraDistance,1.0f);
+
 
 // Variáveis que controlam rotação do antebraço
 float g_ForearmAngleZ = 0.0f;
@@ -232,14 +242,9 @@ int main(int argc, char* argv[])
         std::exit(EXIT_FAILURE);
     }
 
-    // Definimos a função de callback que será chamada sempre que o usuário
-    // pressionar alguma tecla do teclado ...
     glfwSetKeyCallback(window, KeyCallback);
-    // ... ou clicar os botões do mouse ...
     glfwSetMouseButtonCallback(window, MouseButtonCallback);
-    // ... ou movimentar o cursor do mouse em cima da janela ...
     glfwSetCursorPosCallback(window, CursorPosCallback);
-    // ... ou rolar a "rodinha" do mouse.
     glfwSetScrollCallback(window, ScrollCallback);
 
     // Indicamos que as chamadas OpenGL deverão renderizar nesta janela
@@ -308,6 +313,8 @@ int main(int argc, char* argv[])
     glm::mat4 the_model;
     glm::mat4 the_view;
 
+    glm::vec4 camera_position_c  = DEFAULT_C;
+
     // Ficamos em loop, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
@@ -340,10 +347,15 @@ int main(int argc, char* argv[])
 
         // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
         // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-        glm::vec4 camera_position_c  = glm::vec4(x,y,z,1.0f); // Ponto "c", centro da câmera
-        glm::vec4 camera_lookat_l    = glm::vec4(0.0f,0.0f,0.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
-        glm::vec4 camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
         glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
+        //glm::vec4 camera_lookat_l    = glm::vec4(0.0f,0.0f,0.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
+        //glm::vec4 camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
+        glm::vec4 camera_view_vector = glm::vec4(x,-y,z,0.0f); // Vetor "view", sentido para onde a câmera está virada
+
+        glm::vec4 w_vector = -camera_view_vector / norm(camera_view_vector);
+        glm::vec4 up_cross_w_vector = crossproduct(camera_up_vector, w_vector);
+        glm::vec4 u_vector = up_cross_w_vector / norm(up_cross_w_vector);
+        //glm::vec4 v_vector = crossproduct(w_vector, u_vector);
 
         // Computamos a matriz "View" utilizando os parâmetros da câmera para
         // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
@@ -355,7 +367,45 @@ int main(int argc, char* argv[])
         // Note que, no sistema de coordenadas da câmera, os planos near e far
         // estão no sentido negativo! Veja slides 176-204 do documento Aula_09_Projecoes.pdf.
         float nearplane = -0.1f;  // Posição do "near plane"
-        float farplane  = -10.0f; // Posição do "far plane"
+        float farplane  = -30.0f; // Posição do "far plane"
+        float speed = 0.1f;
+
+        if(pressing_W) {
+            camera_position_c += -w_vector * speed;
+        }
+        if(pressing_S) {
+            camera_position_c += w_vector * speed;
+        }
+        if(pressing_D) {
+            camera_position_c += u_vector * speed;
+        }
+        if(pressing_A) {
+            camera_position_c += -u_vector * speed;
+        }
+        if(pressing_SPACE) {
+            camera_position_c = DEFAULT_C;
+        }
+
+        /*
+        // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
+        // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
+        glm::vec4 camera_position_c  = glm::vec4(x,y,z,1.0f); // Ponto "c", centro da câmera
+        glm::vec4 camera_lookat_l    = glm::vec4(0.0f,0.0f,0.0f,1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
+        glm::vec4 camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
+        glm::vec4 camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
+        */
+
+        // Computamos a matriz "View" utilizando os parâmetros da câmera para
+        // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
+        //glm::mat4 view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
+
+        // Agora computamos a matriz de Projeção.
+        //glm::mat4 projection;
+
+        // Note que, no sistema de coordenadas da câmera, os planos near e far
+        // estão no sentido negativo! Veja slides 176-204 do documento Aula_09_Projecoes.pdf.
+        //float nearplane = -0.1f;  // Posição do "near plane"
+        //float farplane  = -30.0f; // Posição do "far plane"
 
         if (g_UsePerspectiveProjection)
         {
@@ -430,6 +480,9 @@ int main(int argc, char* argv[])
         // Imprimimos na tela informação sobre o número de quadros renderizados
         // por segundo (frames per second).
         TextRendering_ShowFramesPerSecond(window);
+
+        TextRendering_ShowDirectionKey(window);
+
 
         // O framebuffer onde OpenGL executa as operações de renderização não
         // é o mesmo que está sendo mostrado para o usuário, caso contrário
@@ -1207,6 +1260,38 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
         fprintf(stdout,"Shaders recarregados!\n");
         fflush(stdout);
     }
+
+    if (key == GLFW_KEY_D) {
+        if(action == GLFW_PRESS) {
+            pressing_D = true;
+        } else if(action == GLFW_RELEASE) {
+            pressing_D = false;
+        }
+    }
+
+    if (key == GLFW_KEY_A){
+        if(action == GLFW_PRESS) {
+            pressing_A = true;
+        } else if(action == GLFW_RELEASE) {
+            pressing_A = false;
+        }
+    }
+
+    if (key == GLFW_KEY_W) {
+        if(action == GLFW_PRESS) {
+            pressing_W = true;
+        } else if(action == GLFW_RELEASE) {
+            pressing_W = false;
+        }
+    }
+
+    if (key == GLFW_KEY_S) {
+        if(action == GLFW_PRESS) {
+            pressing_S = true;
+        } else if(action == GLFW_RELEASE) {
+            pressing_S = false;
+        }
+    }
 }
 
 // Definimos o callback para impressão de erros da GLFW no terminal
@@ -1305,6 +1390,44 @@ void TextRendering_ShowProjection(GLFWwindow* window)
         TextRendering_PrintString(window, "Perspective", 1.0f-13*charwidth, -1.0f+2*lineheight/10, 1.0f);
     else
         TextRendering_PrintString(window, "Orthographic", 1.0f-13*charwidth, -1.0f+2*lineheight/10, 1.0f);
+}
+
+void TextRendering_ShowDirectionKey(GLFWwindow* window)
+{
+    if ( !g_ShowInfoText )
+        return;
+
+    #define STRING_SIZE 30
+
+    // Variáveis estáticas (static) mantém seus valores entre chamadas
+    // subsequentes da função!
+    static char  buffer_X[STRING_SIZE];
+    static char  buffer_Z[STRING_SIZE];
+    static int   numchars_X;
+    static int   numchars_Z;
+
+
+    if(pressing_D) {
+        numchars_X = snprintf(buffer_X, STRING_SIZE, "MOVEMENT X-AXIS: Positive");
+    } else if(pressing_A) {
+        numchars_X = snprintf(buffer_X, STRING_SIZE, "MOVEMENT X-AXIS: Negative");
+    } else {
+        numchars_X = snprintf(buffer_X, STRING_SIZE, "MOVEMENT X-AXIS: None ---");
+    }
+
+    if(pressing_W) {
+        numchars_Z = snprintf(buffer_Z, STRING_SIZE, "MOVEMENT Z-AXIS: Positive");
+    } else if(pressing_S) {
+        numchars_Z = snprintf(buffer_Z, STRING_SIZE, "MOVEMENT Z-AXIS: Negative");
+    } else {
+        numchars_Z = snprintf(buffer_Z, STRING_SIZE, "MOVEMENT Z-AXIS: None ---");
+    }
+
+    float lineheight = TextRendering_LineHeight(window);
+    float charwidth = TextRendering_CharWidth(window);
+
+    TextRendering_PrintString(window, buffer_X, 1.0f-(numchars_X + 1)*charwidth, 1.0f-2*lineheight, 1.0f);
+    TextRendering_PrintString(window, buffer_Z, 1.0f-(numchars_Z + 1)*charwidth, 1.0f-3*lineheight, 1.0f);
 }
 
 // Escrevemos na tela o número de quadros renderizados por segundo (frames per
