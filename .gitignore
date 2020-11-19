@@ -2,4 +2,4 @@
 *.exe
 *.o
 Laboratorio_5.depend
-*.depend
+/Debug
