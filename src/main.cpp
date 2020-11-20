@@ -150,7 +150,7 @@ bool pressing_SPACE = false;
 
 glm::vec4 dinoCoords = glm::vec4(2.0f,-1.0f,4.0f, 0.0f);
 glm::vec4 deerCoords = glm::vec4(6.0f,-1.3f,-2.0f, 0.0f);
-glm::vec4 penguinCoords = glm::vec4(6.0f,0.5f,-10.0f, 0.0f);
+glm::vec4 penguinCoords = glm::vec4(6.0f,0.5f,-5.0f, 0.0f);
 glm::vec4 coinCoords = glm::vec4(-3.0f,1.0f,3.0f, 0.f);
 
 std::map<std::string, glm::vec4> bboxCoordsMin;
@@ -283,7 +283,7 @@ int main(int argc, char* argv[])
     LoadShadersFromFiles();
 
     // Carregamos duas imagens para serem utilizadas como textura
-    LoadTextureImage("../../data/floor.png"); // TextureImage1
+    LoadTextureImage("../../data/floor.jpg"); // TextureImage1
     LoadTextureImage("../../data/norm.png");  // TextureImage0
     LoadTextureImage("../../data/penguin.png"); // TextureImage2
     LoadTextureImage("../../data/coin-texture.jpg"); // TextureImage3
@@ -305,14 +305,6 @@ int main(int argc, char* argv[])
     ObjModel penguinmodel("../../data/penguin.obj");
     ComputeNormals(&penguinmodel);
     BuildTrianglesAndAddToVirtualScene(&penguinmodel);
-    /*
-    ObjModel cloudmodel("../../data/cloud.obj");
-    ComputeNormals(&cloudmodel);
-    BuildTrianglesAndAddToVirtualScene(&cloudmodel);
-        ObjModel alligatormodel("../../data/alligator.obj");
-    ComputeNormals(&alligatormodel);
-    BuildTrianglesAndAddToVirtualScene(&alligatormodel);
-    */
 
     ObjModel deermodel("../../data/deer.obj");
     ComputeNormals(&deermodel);
@@ -500,13 +492,12 @@ int main(int argc, char* argv[])
         glUniform1i(object_id_uniform, SPHERE);
         DrawVirtualObject("sphere", "", 0);
 
-        // Desenhamos o dinossauro
-        model = Matrix_Translate(dinoCoords.x, dinoCoords.y, dinoCoords.z)
-        * Matrix_Scale(2.0f, 2.0f, 2.0f);
-        //* Matrix_Rotate_Y(-z);
+        model = Matrix_Translate(dinoCoords.x,dinoCoords.y,dinoCoords.z)
+            * Matrix_Scale(0.006f, 0.006f, 0.006f)
+            * Matrix_Rotate_Y(PI);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, DINO);
-        DrawVirtualObject("dino", "dino", 1);
+        glUniform1i(object_id_uniform, DEER);
+        DrawVirtualObject("deer", "dino", 0);
 
         #define DEER_SCALE 0.006
         // Desenhamos o modelo do coelho

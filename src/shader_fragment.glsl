@@ -51,8 +51,6 @@ uniform sampler2D TextureImage3; //coin
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec3 color;
 
-vec3 phong_illumination(vec3 Kd, vec3 Ka, vec3 Ks, vec3 I, vec4 n, vec4 l, vec4 v);
-
 // Constantes
 #define M_PI   3.14159265358979323846
 #define M_PI_2 1.57079632679489661923
@@ -90,6 +88,17 @@ vec3 bling_phong_illumination(vec3 Kd, vec3 Ka, vec3 Ks, vec3 I, vec4 n, vec4 l,
     return lambert_diffuse_term + ambient_term + bling_phong_specular_term;
 }
 
+vec3 lambert_difuse_illumination(vec3 Kd, vec3 Ka, vec4 n, vec4 l) {
+
+    vec3 I = vec3(1.0,1.0,1.0);
+
+    vec3 lambert_diffuse_term = Kd * I * max(0, dot(n, l));
+
+    vec3 ambient_term = Ka * vec3(0.2,0.2,0.2);
+
+    return lambert_diffuse_term + ambient_term;
+}
+
 void main()
 {
     // Obtemos a posição da câmera utilizando a inversa da matriz que define o
@@ -107,9 +116,9 @@ void main()
     vec3 I = vec3(1.0,1.0,1.0);
 
     // Parâmetros que definem as propriedades espectrais da superfície
-    vec3 Kd; // Refletância difusa (da superfície)
-    vec3 Ks; // Refletância especular (da superfície)
-    vec3 Ka; // Refletância ambiente (da superfície)
+    vec3 Kd = vec3(0.5, 0.5, 0.8); // Refletância difusa (da superfície)
+    vec3 Ks = vec3(0.8, 0.8, 0.8); // Refletância especular (da superfície)
+    vec3 Ka = Kd / 2; // Refletância ambiente (da superfície)
 
     // Coordenadas de textura U e V
     float U = 0.0;
@@ -128,6 +137,7 @@ void main()
             U = (theta + M_PI)/(2*M_PI);
             V = (phi + M_PI_2)/M_PI;
             Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
+            color = Kd0 * bling_phong_illumination(Kd, Ka, Ks, I, n, l, v);
             break;
         case BUNNY :
             float minx = bbox_min.x;
@@ -139,46 +149,45 @@ void main()
             U = (position_model.x - minx)/(maxx - minx);
             V = (position_model.y - miny)/(maxy - miny);
             Kd0 = texture(TextureImage1, vec2(U,V)).rgb;
+            color = Kd0 * bling_phong_illumination(Kd, Ka, Ks, I, n, l, v);
             break;
         case DINO:
             U = texcoords.x;
             V = texcoords.y;
             Kd0 = texture(TextureImage1, vec2(U,V)).rgb;
+            color = Kd0 * bling_phong_illumination(Kd, Ka, Ks, I, n, l, v);
             break;
         case PLANE:
             U = texcoords.x*100;
             V = texcoords.y*5;
             Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
+            color = Kd0 * bling_phong_illumination(Kd, Ka, Ks, I, n, l, v);
             break;
         case PENGUIN:
             U = texcoords.x;
             V = texcoords.y;
             Kd0 = texture(TextureImage2, vec2(U,V)).rgb;
+            color = Kd0 * bling_phong_illumination(Kd, Ka, Ks, I, n, l, v);
             break;
         case DEER:
-            Kd = vec3(0.08, 0.4, 0.8);
-            Ks = vec3(0.8, 0.8, 0.8);
-            Ka = Kd / 2;
-            //Kd0 = texture(TextureImage2, vec2(U,V)).rgb;
+            color = gouraud_bling_phong_color;
             break;
         case COIN:
             U = texcoords.x;
             V = texcoords.y;
             Kd0 = texture(TextureImage3, vec2(U,V)).rgb;
+            Ks = vec3(1.0, 1.0, 1.0);
+            color = Kd0 * bling_phong_illumination(Kd, Ka, Ks, I, n, l, v);
+            break;
+        case CUBE:
+            U = texcoords.x;
+            V = texcoords.y;
+            Kd0 = texture(TextureImage1, vec2(U,V)).rgb;
+            Ks = vec3(1.0, 1.0, 1.0);
+            color = Kd0 * bling_phong_illumination(Kd, Ka, Ks, I, n, l, v);
             break;
     }
 
-    // Equação de Iluminação
-    float lambert = max(0,dot(n,l));
-
-    object_id == DEER ?
-        color =  gouraud_phong_color :
-        color = Kd0 * (lambert + 0.01);
-
-        //Kd0 * (lambert + 0.01) ou phong_illumination(Kd, Ka, Ks, I, n, l, v)
-
-    // Cor final com correção gamma, considerando monitor sRGB.
-    // Veja https://en.wikipedia.org/w/index.php?title=Gamma_correction&oldid=751281772#Windows.2C_Mac.2C_sRGB_and_TV.2Fvideo_standard_gammas
     color = pow(color, vec3(1.0,1.0,1.0)/2.2);
 }
 

@@ -79,7 +79,7 @@ void main()
     vec4 p = position_world;
     vec4 l = normalize(vec4(1.0,1.0,0.5,0.0));
     vec4 v = normalize(camera_position - p);
-    vec3 Kd = vec3(0.08, 0.4, 0.8);
+    vec3 Kd = vec3(0.5, 0.5, 0.8);
     vec3 Ks = vec3(0.8, 0.8, 0.8);
     vec3 Ka = Kd / 2;
     vec3 I = vec3(1.0,1.0,1.0);
