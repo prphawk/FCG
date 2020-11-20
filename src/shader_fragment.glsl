@@ -60,13 +60,13 @@ void main()
     vec4 n = normalize(normal);
 
     // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
-    vec4 l = normalize(vec4(1.0,1.0,0.0,0.0));
+    vec4 l = normalize(vec4(1.0,1.0,0.5,0.0));
 
     // Vetor que define o sentido da câmera em relação ao ponto atual.
     vec4 v = normalize(camera_position - p);
 
     // Vetor que define o sentido da reflexão especular ideal.
-    vec4 r = -l + 2 * n * dot(n,l);//vec4(0.0,0.0,0.0,0.0);
+    vec4 r = -l + 2 * n * dot(n,l);
 
     // Parâmetros que definem as propriedades espectrais da superfície
     vec3 Kd; // Refletância difusa (da superfície)
