@@ -434,10 +434,8 @@ int main(int argc, char* argv[])
             if(pressing_D) movement = u_vector * speed;
             if(pressing_A) movement = -u_vector * speed;
 
-            if(!first_iteration)
-            {
-                glm::vec4 dMax = Matrix_Translate(dinoCoords.x + movement.x, dinoCoords.y + movement.y, dinoCoords.z + movement.z)* Matrix_Scale(2.0f, 2.0f, 2.0f)*bboxCoordsMax["dino"];
-                glm::vec4 dMin = Matrix_Translate(dinoCoords.x + movement.x, dinoCoords.y + movement.y, dinoCoords.z + movement.z)* Matrix_Scale(2.0f, 2.0f, 2.0f)*bboxCoordsMin["dino"];
+            glm::vec4 dMax = Matrix_Translate(dinoCoords.x + movement.x, dinoCoords.y + movement.y, dinoCoords.z + movement.z)* Matrix_Scale(2.0f, 2.0f, 2.0f)*bboxCoordsMax["dino"];
+            glm::vec4 dMin = Matrix_Translate(dinoCoords.x + movement.x, dinoCoords.y + movement.y, dinoCoords.z + movement.z)* Matrix_Scale(2.0f, 2.0f, 2.0f)*bboxCoordsMin["dino"];
 
                 if(AABBCollision(dMax, dMin, "bunny")) collision = true;
                 if(AABBCollision(dMax, dMin, "deer0")) collision = true;
@@ -445,8 +443,6 @@ int main(int argc, char* argv[])
                 if(AABBCollision(dMax, dMin, "deer2")) collision = true;
                 if(AABBCollision(dMax, dMin, "wall1")) collision = true;
                 if(AABBCollision(dMax, dMin, "wall2")) collision = true;
-
-            }
 
             if(!collision) dinoCoords += movement;
             //else dinoCoords -= movement;
@@ -595,7 +591,7 @@ int main(int argc, char* argv[])
         glUniform1i(object_id_uniform, CUBE);
         DrawVirtualObject("cube", "wall2", 1);
         bboxCoordsMax["wall2"] = model*bboxCoordsMax["wall2"];
-        bboxCoordsMax["wall2"] = model*bboxCoordsMax["wall2"];
+        bboxCoordsMin["wall2"] = model*bboxCoordsMin["wall2"];
 
         TextRendering_ShowEulerAngles(window);
         TextRendering_ShowProjection(window);
