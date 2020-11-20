@@ -271,13 +271,8 @@ int main(int argc, char* argv[])
     LoadShadersFromFiles();
 
     // Carregamos duas imagens para serem utilizadas como textura
-<<<<<<< Updated upstream
-    LoadTextureImage("../../data/norm.png");                       // TextureImageDinoNorm
-    LoadTextureImage("../../data/floor.png"); // TextureImage0
-=======
     LoadTextureImage("../../data/floor.png");  // TextureImageDinoNorm
     LoadTextureImage("../../data/Dino2.jpeg"); // TextureImage0
->>>>>>> Stashed changes
     LoadTextureImage("../../data/penguin.png"); // TextureImage2
 
 
@@ -322,8 +317,6 @@ int main(int argc, char* argv[])
     glm::mat4 the_view;
 
     //glm::vec4 camera_position_c  = DEFAULT_C;
-
-
 
 
 
@@ -486,11 +479,7 @@ int main(int argc, char* argv[])
         // Desenhamos o dino
         model = Matrix_Translate(dinoCoords.x, dinoCoords.y, dinoCoords.z)
         * Matrix_Scale(2.0f, 2.0f, 2.0f)
-<<<<<<< Updated upstream
-        * Matrix_Rotate_Y(45);
-=======
         * Matrix_Rotate_Y(90);
->>>>>>> Stashed changes
         //* Matrix_Rotate_Y(-z);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, DINO);

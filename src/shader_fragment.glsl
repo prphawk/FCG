@@ -35,6 +35,7 @@ uniform sampler2D TextureImage0; //floor
 uniform sampler2D TextureImage1; //dino
 uniform sampler2D TextureImage2; //penguin
 
+
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec3 color;
 
