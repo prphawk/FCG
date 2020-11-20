@@ -1,7 +1,4 @@
-# Blender v2.79 (sub 0) OBJ File: 'penguin.blend'
-# www.blender.org
-mtllib penguin.mtl
-o Penguin_Cylinder
+o penguin
 v 0.003100 0.013390 -0.147620
 v 0.014914 0.064234 -0.378347
 v 0.013781 0.038503 -0.399853

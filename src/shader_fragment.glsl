@@ -24,6 +24,11 @@ uniform mat4 projection;
 #define PLANE  2
 #define DINO   3
 #define PENGUIN  4
+#define ALLIGATOR 5
+#define DEER 6
+#define CLOUD 7
+#define CAT 8
+
 uniform int object_id;
 
 // Parâmetros da axis-aligned bounding box (AABB) do modelo
@@ -50,15 +55,8 @@ void main()
     vec4 origin = vec4(0.0, 0.0, 0.0, 1.0);
     vec4 camera_position = inverse(view) * origin;
 
-    // O fragmento atual é coberto por um ponto que percente à superfície de um
-    // dos objetos virtuais da cena. Este ponto, p, possui uma posição no
-    // sistema de coordenadas global (World coordinates). Esta posição é obtida
-    // através da interpolação, feita pelo rasterizador, da posição de cada
-    // vértice.
     vec4 p = position_world;
 
-    // Normal do fragmento atual, interpolada pelo rasterizador a partir das
-    // normais de cada vértice.
     vec4 n = normalize(normal);
 
     // Vetor que define o sentido da fonte de luz em relação ao ponto atual.
@@ -66,6 +64,15 @@ void main()
 
     // Vetor que define o sentido da câmera em relação ao ponto atual.
     vec4 v = normalize(camera_position - p);
+
+    // Vetor que define o sentido da reflexão especular ideal.
+    vec4 r = -l + 2 * n * dot(n,l);//vec4(0.0,0.0,0.0,0.0);
+
+    // Parâmetros que definem as propriedades espectrais da superfície
+    vec3 Kd; // Refletância difusa (da superfície)
+    vec3 Ks; // Refletância especular (da superfície)
+    vec3 Ka; // Refletância ambiente (da superfície)
+    float q; // Expoente especular para o modelo de iluminação de Phong
 
     // Coordenadas de textura U e V
     float U = 0.0;
@@ -102,8 +109,8 @@ void main()
             Kd0 = texture(TextureImage1, vec2(U,V)).rgb;
             break;
         case PLANE:
-            U = texcoords.x;
-            V = texcoords.y;
+            U = texcoords.x * 100;
+            V = texcoords.y * 100;
             Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
             break;
         case PENGUIN:
@@ -111,13 +118,31 @@ void main()
             V = texcoords.y;
             Kd0 = texture(TextureImage2, vec2(U,V)).rgb;
             break;
+        case DEER:
+            Kd = vec3(0.08, 0.4, 0.8);
+            Ks = vec3(0.8, 0.8, 0.8);
+            Ka = Kd / 2;
+            q = 32.0;
+            Kd0 = texture(TextureImage2, vec2(U,V)).rgb;
     }
 
+    // Espectro da fonte de iluminação
+    vec3 I = vec3(1.0,1.0,1.0);
+    // Espectro da luz ambiente
+    vec3 Ia = vec3(0.2,0.2,0.2);
+    // Termo difuso utilizando a lei dos cossenos de Lambert
+    vec3 lambert_diffuse_term = Kd * I * max(0, dot(n, l));
+    // Termo ambiente
+    vec3 ambient_term = Ka * Ia; // PREENCHA AQUI o termo ambiente
+    // Termo especular utilizando o modelo de iluminação de Phong
+    vec3 phong_specular_term  = Ks * I * pow(max(0, dot(r, v)), q);
 
     // Equação de Iluminação
     float lambert = max(0,dot(n,l));
 
-    color = Kd0 * (lambert + 0.01);
+    object_id == DEER ?
+        color = lambert_diffuse_term + ambient_term + phong_specular_term :
+        color = Kd0 * (lambert + 0.01);
 
     // Cor final com correção gamma, considerando monitor sRGB.
     // Veja https://en.wikipedia.org/w/index.php?title=Gamma_correction&oldid=751281772#Windows.2C_Mac.2C_sRGB_and_TV.2Fvideo_standard_gammas
