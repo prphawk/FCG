@@ -149,10 +149,9 @@ bool pressing_S = false;
 bool pressing_SPACE = false;
 
 glm::vec4 dinoCoords = glm::vec4(2.0f,-1.0f,4.0f, 0.0f);
-glm::vec4 deerCoords = glm::vec4(6.0f,-1.3f,10.0f, 0.0f);
+glm::vec4 deerCoords = glm::vec4(6.0f,-1.3f,-2.0f, 0.0f);
 glm::vec4 penguinCoords = glm::vec4(6.0f,0.5f,-10.0f, 0.0f);
 glm::vec4 coinCoords = glm::vec4(-3.0f,1.0f,3.0f, 0.f);
-
 
 std::map<std::string, glm::vec4> bboxCoordsMin;
 std::map<std::string, glm::vec4> bboxCoordsMax;
@@ -168,9 +167,10 @@ bool g_MiddleMouseButtonPressed = false; // Análogo para botão do meio do mous
 // renderização.
 float g_CameraTheta = 0.0f; // Ângulo no plano ZX em relação ao eixo Z
 float g_CameraPhi = 90.0f;   // Ângulo em relação ao eixo Y
-float g_CameraDistance = 15.5f; // Distância da câmera para a origem
+float g_CameraDistance = 10.0f; // Distância da câmera para a origem
 float g_CameraHeight = 4.0f; // Distância da câmera para a origem
 glm::vec4 DEFAULT_C = glm::vec4(0.0f,g_CameraHeight,-g_CameraDistance,1.0f);
+glm::vec4 camera_position_c = DEFAULT_C;
 
 bool collision = false;
 
@@ -193,10 +193,24 @@ GLint bbox_max_uniform;
 // Número de texturas carregadas pela função LoadTextureImage()
 GLuint g_NumLoadedTextures = 0;
 
+glm::mat4 noXMatrix = Matrix(
+    0.0f, 0.0f, 0.0f, 0.0f,
+    0.0f, 1.0f, 0.0f, 0.0f,
+    0.0f, 0.0f, 1.0f, 0.0f,
+    0.0f, 0.0f, 0.0f, 1.0f
+);
+
 glm::mat4 noYMatrix = Matrix(
     1.0f, 0.0f, 0.0f, 0.0f,
     0.0f, 0.0f, 0.0f, 0.0f,
     0.0f, 0.0f, 1.0f, 0.0f,
+    0.0f, 0.0f, 0.0f, 1.0f
+);
+
+glm::mat4 noZMatrix = Matrix(
+    1.0f, 0.0f, 0.0f, 0.0f,
+    0.0f, 1.0f, 0.0f, 0.0f,
+    0.0f, 0.0f, 0.0f, 0.0f,
     0.0f, 0.0f, 0.0f, 1.0f
 );
 
@@ -355,6 +369,9 @@ int main(int argc, char* argv[])
         }
         penguinCoords.y -= cos(nowTime) * 0.0015f;
         coinCoords.y -= cos(2*nowTime) * 0.003f;
+        deerCoords.x -= 0.01;
+        deerCoords.z -= cos(nowTime) * 0.01f;
+
         float nearplane = -0.1f;  // Posição do "near plane"
         float farplane  = -500.0f; // Posição do "far plane"
         float speed = 0.1f;
@@ -423,6 +440,13 @@ int main(int argc, char* argv[])
                 glm::vec4 dMin = Matrix_Translate(dinoCoords.x + movement.x, dinoCoords.y + movement.y, dinoCoords.z + movement.z)* Matrix_Scale(2.0f, 2.0f, 2.0f)*bboxCoordsMin["dino"];
 
                 if(AABBCollision(dMax, dMin, "bunny")) collision = true;
+                if(AABBCollision(dMax, dMin, "deer0")) collision = true;
+                if(AABBCollision(dMax, dMin, "deer1")) collision = true;
+                if(AABBCollision(dMax, dMin, "deer2")) collision = true;
+                if(AABBCollision(dMax, dMin, "wall1")) collision = true;
+                if(AABBCollision(dMax, dMin, "wall2")) collision = true;
+
+
             }
 
             if(!collision) dinoCoords += movement;
@@ -430,7 +454,7 @@ int main(int argc, char* argv[])
 
         } else {
 
-            glm::vec4 camera_position_c  = glm::vec4(x,y,z,1.0f); // Ponto "c", centro da câmera
+            camera_position_c  = glm::vec4(x,y,z,1.0f); // Ponto "c", centro da câmera
             camera_view_vector = glm::vec4(0.0f,0.0f, 0.0f, 1.0f)-camera_position_c; // Vetor "view", sentido para onde a câmera está virada
             camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
 
@@ -470,6 +494,7 @@ int main(int argc, char* argv[])
         #define COIN 10
         #define PEDESTAL 11
 
+
         #define PI 3.1415
         // Desenhamos o modelo da esfera
         model = Matrix_Translate(-1.0f,0.0f,0.0f)
@@ -490,13 +515,13 @@ int main(int argc, char* argv[])
 
         #define DEER_SCALE 0.006
         // Desenhamos o modelo do coelho
-        model = Matrix_Translate(1.0f,0.0f,0.0f)
-              * Matrix_Rotate_X(g_AngleX + nowTime * 0.1f);
+        model = Matrix_Translate(1.0f,0.0f,0.0f);
+              //* Matrix_Rotate_X(g_AngleX + nowTime * 0.1f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, BUNNY);
         DrawVirtualObject("bunny", "bunny", 1);
         bboxCoordsMax["bunny"] = Matrix_Translate(1.0f,0.0f,0.0f)*bboxCoordsMax["bunny"];
-        bboxCoordsMin["bunny"] = Matrix_Translate(1.0f,0.0f,0.0f)*bboxCoordsMax["bunny"];
+        bboxCoordsMin["bunny"] = Matrix_Translate(1.0f,0.0f,0.0f)*bboxCoordsMin["bunny"];
 
         // Desenhamos o plano do chão
         model = Matrix_Translate(0.0f,-1.1f,0.0f)
@@ -506,42 +531,43 @@ int main(int argc, char* argv[])
         DrawVirtualObject("plane", "", 0);
 
         // Desenhamos as paredes
-        model = Matrix_Translate(0.0f, 2.39f, -9.94f)
+        model = Matrix_Translate(0.0f, 2.5f, -10.0f)
                 * Matrix_Scale(800.0f, 7.2, 1.0f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, CUBE);
         DrawVirtualObject("cube", "wall1", 1);
         bboxCoordsMax["wall1"] = model*bboxCoordsMax["wall1"];
-        bboxCoordsMax["wall1"] = model*bboxCoordsMax["wall1"];
+        bboxCoordsMin["wall1"] = model*bboxCoordsMin["wall1"];
 
         for(int i = 0; i < 3; i++) {
             model = Matrix_Translate(penguinCoords.x + 8.0f * i,penguinCoords.y,penguinCoords.z)
                 * Matrix_Scale(2.0f, 2.0f, 2.0f);
                 glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
                 glUniform1i(object_id_uniform, PENGUIN);
-                DrawVirtualObject("penguin");
+                DrawVirtualObject("penguin", "penguin", 1);
 
-            model = Matrix_Translate(deerCoords.x + 8.0f * i,deerCoords.y,deerCoords.z)
+            model = Matrix_Translate(deerCoords.x,deerCoords.y,deerCoords.z + 4.0f * i)
                 * Matrix_Scale(0.006f, 0.006f, 0.006f)
-                * Matrix_Rotate_Y(PI/2.0f);
+                * Matrix_Rotate_Y(PI);
             glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(object_id_uniform, DEER);
-            DrawVirtualObject("deer");
-
+            DrawVirtualObject("deer", ("deer" + std::to_string(i)).c_str(), 1);
+            bboxCoordsMax[("deer" + std::to_string(i)).c_str()] = model*bboxCoordsMax[("deer" + std::to_string(i)).c_str()];
+            bboxCoordsMin[("deer" + std::to_string(i)).c_str()] = model*bboxCoordsMin[("deer" + std::to_string(i)).c_str()];
 
             model = Matrix_Translate(deerCoords.x + 5.0f * i,deerCoords.y,deerCoords.z)
                 * Matrix_Scale(0.1f, 0.1f, 0.1f)
                 * Matrix_Rotate_Y(PI/2.0f);
             glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(object_id_uniform, PEDESTAL);
-            DrawVirtualObject("pedestal");
+            DrawVirtualObject("pedestal", "pedestal", 1);
         }
 
         model = Matrix_Translate(3.0f,0.0f,3.0f)
             * Matrix_Scale(2.1f, 2.1f, 2.1f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, CAT);
-        DrawVirtualObject("cat");
+        DrawVirtualObject("cat", "cat", 1);
 
         for(int i = 0; i < 5; i++) {
 
@@ -557,7 +583,7 @@ int main(int argc, char* argv[])
                     * Matrix_Rotate_Z(g_AngleZ + nowTime * 0.7f);
                 glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
                 glUniform1i(object_id_uniform, COIN);
-                DrawVirtualObject("coin");
+                DrawVirtualObject("coin", "coin", 1);
             }
         }
 

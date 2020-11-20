@@ -966,11 +966,9 @@
 	<inttypes.h>
 	<stdint.h>
 
-<<<<<<< HEAD
-1605893555 source:c:\users\mayra\onedrive\Área de trabalho\fcg\src\main.cpp
-=======
-1605835570 source:c:\users\mayra\onedrive\Área de trabalho\fcg\src\main.cpp
->>>>>>> n
+1604271778 D
+
+1605895871 source:c:\users\mayra\onedrive\Área de trabalho\fcg\src\main.cpp
 	<cmath>
 	<cstdio>
 	<cstdlib>

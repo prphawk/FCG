@@ -28,7 +28,9 @@ uniform mat4 projection;
 #define DEER 6
 #define CLOUD 7
 #define CAT 8
-#define COIN 9
+#define CUBE 9
+#define COIN 10
+#define PEDESTAL 11
 
 uniform int object_id;
 
