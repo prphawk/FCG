@@ -152,7 +152,8 @@ bool pressing_W = false;
 bool pressing_S = false;
 bool pressing_SPACE = false;
 
-glm::vec4 dinoCoords = glm::vec4(0.0f,-1.0f,0.0f, 0.0f);
+glm::vec4 DEFAULT_DINO = glm::vec4(-4.0f,-1.0f,0.0f,1.0f);
+glm::vec4 dinoCoords = DEFAULT_DINO;
 
 // "g_LeftMouseButtonPressed = true" se o usuário está com o botão esquerdo do mouse
 // pressionado no momento atual. Veja função MouseButtonCallback().
@@ -165,11 +166,12 @@ bool g_MiddleMouseButtonPressed = false; // Análogo para botão do meio do mous
 // efetiva da câmera é calculada dentro da função main(), dentro do loop de
 // renderização.
 float g_CameraTheta = 0.0f; // Ângulo no plano ZX em relação ao eixo Z
-float g_CameraPhi = 0.0f;   // Ângulo em relação ao eixo Y
+float g_CameraPhi = 90.0f;   // Ângulo em relação ao eixo Y
 float g_CameraDistance = 5.5f; // Distância da câmera para a origem
-float g_CameraHeight = -50.0f; // Distância da câmera para a origem
-glm::vec4 DEFAULT_C = glm::vec4(0.0f,g_CameraHeight,-g_CameraDistance,1.0f);
+float g_CameraHeight = 4.0f; // Distância da câmera para a origem
 
+glm::vec4 DEFAULT_C = glm::vec4(0.0f,40.0,5.0f,1.0f);
+glm::vec4 camera_position_c = DEFAULT_C;
 
 // Variável que controla o tipo de projeção utilizada: perspectiva ou ortográfica.
 bool g_UsePerspectiveProjection = true;
@@ -269,8 +271,13 @@ int main(int argc, char* argv[])
     LoadShadersFromFiles();
 
     // Carregamos duas imagens para serem utilizadas como textura
+<<<<<<< Updated upstream
     LoadTextureImage("../../data/norm.png");                       // TextureImageDinoNorm
     LoadTextureImage("../../data/floor.png"); // TextureImage0
+=======
+    LoadTextureImage("../../data/floor.png");  // TextureImageDinoNorm
+    LoadTextureImage("../../data/Dino2.jpeg"); // TextureImage0
+>>>>>>> Stashed changes
     LoadTextureImage("../../data/penguin.png"); // TextureImage2
 
 
@@ -314,7 +321,9 @@ int main(int argc, char* argv[])
     glm::mat4 the_model;
     glm::mat4 the_view;
 
-    glm::vec4 camera_position_c  = DEFAULT_C;
+    //glm::vec4 camera_position_c  = DEFAULT_C;
+
+
 
 
 
@@ -350,7 +359,7 @@ int main(int argc, char* argv[])
         // variáveis g_CameraDistance, g_CameraPhi, e g_CameraTheta são
         // controladas pelo mouse do usuário. Veja as funções CursorPosCallback()
         // e ScrollCallback().
-        float r = g_CameraDistance;
+        float r = 40.0;
         float y = r*sin(g_CameraPhi);
         float z = r*cos(g_CameraPhi)*cos(g_CameraTheta);
         float x = r*cos(g_CameraPhi)*sin(g_CameraTheta);
@@ -386,9 +395,11 @@ int main(int argc, char* argv[])
 
         if(g_UseFreeCamera) {
 
+            camera_position_c.y = g_CameraHeight;
+
             camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
 
-            camera_view_vector = glm::vec4(x,-y,z,0.0f); // Vetor "view", sentido para onde a câmera está virada
+            camera_view_vector = (dinoCoords-camera_position_c)*Matrix_Rotate_X(g_CameraPhi)*Matrix_Rotate_Y(-g_CameraTheta);
 
             glm::vec4 w_vector = -camera_view_vector / norm(camera_view_vector);
             glm::vec4 up_cross_w_vector = crossproduct(camera_up_vector, w_vector);
@@ -412,13 +423,27 @@ int main(int argc, char* argv[])
             // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
             // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
             camera_position_c  = glm::vec4(x,y,z,1.0f); // Ponto "c", centro da câmera
-            glm::vec4 camera_lookat_l = glm::vec4(0.0f,0.0f, 0.0f, 1.0f); // Ponto "l", para onde a câmera (look-at) estará sempre olhando
-            camera_view_vector = camera_lookat_l - camera_position_c; // Vetor "view", sentido para onde a câmera está virada
+            camera_view_vector = glm::vec4(0.0f,0.0f, 0.0f, 1.0f)-camera_position_c; // Vetor "view", sentido para onde a câmera está virada
             camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
 
             // Computamos a matriz "View" utilizando os parâmetros da câmera para
             // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
             view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
+
+                        glm::vec4 w_vector = -camera_view_vector / norm(camera_view_vector);
+            glm::vec4 up_cross_w_vector = crossproduct(camera_up_vector, w_vector);
+            glm::vec4 u_vector = up_cross_w_vector / norm(up_cross_w_vector);
+
+            view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
+
+            glm::vec4 movement = glm::vec4(0.0f,0.0f,0.0f,0.0f);
+
+            if(pressing_W) movement = (noYMatrix * -w_vector) * speed;
+            if(pressing_S) movement = (noYMatrix * w_vector) * speed;
+            if(pressing_D) movement = u_vector * speed;
+            if(pressing_A) movement = -u_vector * speed;
+
+            dinoCoords += movement;
         }
 
         glm::mat4 model = Matrix_Identity(); // Transformação identidade de modelagem
@@ -461,7 +486,11 @@ int main(int argc, char* argv[])
         // Desenhamos o dino
         model = Matrix_Translate(dinoCoords.x, dinoCoords.y, dinoCoords.z)
         * Matrix_Scale(2.0f, 2.0f, 2.0f)
+<<<<<<< Updated upstream
         * Matrix_Rotate_Y(45);
+=======
+        * Matrix_Rotate_Y(90);
+>>>>>>> Stashed changes
         //* Matrix_Rotate_Y(-z);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, DINO);
@@ -1250,6 +1279,8 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     if (key == GLFW_KEY_C && action == GLFW_PRESS)
     {
         g_UseFreeCamera = !g_UseFreeCamera;
+
+        if (g_UseFreeCamera) camera_position_c = glm::vec4(dinoCoords.x+g_CameraDistance, g_CameraHeight, dinoCoords.z+g_CameraDistance, 1.0f);
     }
 
     // Se o usuário apertar a tecla R, recarregamos os shaders dos arquivos "shader_fragment.glsl" e "shader_vertex.glsl".
