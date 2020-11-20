@@ -533,15 +533,13 @@ int main(int argc, char* argv[])
         bboxCoordsMax["wall1"] = model*bboxCoordsMax["wall1"];
         bboxCoordsMax["wall1"] = model*bboxCoordsMax["wall1"];
 
-        //model = Matrix_Translate(0.0f, 2.39f, 9.94f)
-        //        * Matrix_Scale(800.0f, 7.2, 1.0f);
-        //glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        //glUniform1i(object_id_uniform, CUBE);
-        //DrawVirtualObject("cube", "wall2", 1);
-        //bboxCoordsMax["wall2"] = model*bboxCoordsMax["wall2"];
-        //bboxCoordsMax["wall2"] = model*bboxCoordsMax["wall2"];
-
-        //printf("%i", collision);
+        model = Matrix_Translate(0.0f, 2.39f, 9.94f)
+                * Matrix_Scale(800.0f, 7.2, 1.0f);
+        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(object_id_uniform, CUBE);
+        DrawVirtualObject("cube", "wall2", 1);
+        bboxCoordsMax["wall2"] = model*bboxCoordsMax["wall2"];
+        bboxCoordsMax["wall2"] = model*bboxCoordsMax["wall2"];
 
         TextRendering_ShowEulerAngles(window);
         TextRendering_ShowProjection(window);
