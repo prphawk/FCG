@@ -13,7 +13,8 @@ in vec4 position_model;
 // Coordenadas de textura obtidas do arquivo OBJ (se existirem!)
 in vec2 texcoords;
 
-in vec3 gourad_color;
+in vec3 gouraud_phong_color;
+in vec3 gouraud_bling_phong_color;
 
 // Matrizes computadas no código C++ e enviadas para a GPU
 uniform mat4 model;
@@ -171,7 +172,7 @@ void main()
     float lambert = max(0,dot(n,l));
 
     object_id == DEER ?
-        color =  bling_phong_illumination(Kd, Ka, Ks, I, n, l, v) :
+        color =  gouraud_phong_color :
         color = Kd0 * (lambert + 0.01);
 
         //Kd0 * (lambert + 0.01) ou phong_illumination(Kd, Ka, Ks, I, n, l, v)

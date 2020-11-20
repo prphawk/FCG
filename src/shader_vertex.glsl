@@ -19,11 +19,15 @@ out vec4 position_world;
 out vec4 position_model;
 out vec4 normal;
 out vec2 texcoords;
-out vec3 gouraud_color;
+out vec3 gouraud_phong_color;
+out vec3 gouraud_bling_phong_color;
 
-vec3 phong_illumination(vec3 Kd, vec3 Ka, vec3 Ks, vec3 I, vec4 n, vec4 l, vec4 v, float q);
+vec3 phong_illumination(vec3 Kd, vec3 Ka, vec3 Ks, vec3 I, vec4 n, vec4 l, vec4 v);
+vec3 bling_phong_illumination(vec3 Kd, vec3 Ka, vec3 Ks, vec3 I, vec4 n, vec4 l, vec4 v);
 
-vec3 phong_illumination(vec3 Kd, vec3 Ka, vec3 Ks, vec3 I, vec4 n, vec4 l, vec4 v, float q) {
+vec3 phong_illumination(vec3 Kd, vec3 Ka, vec3 Ks, vec3 I, vec4 n, vec4 l, vec4 v) {
+
+    float q = 32.0;
     // Vetor que define o sentido da reflexão especular ideal.
     vec4 r = -l + 2 * n * dot(n,l);
     // Termo difuso utilizando a lei dos cossenos de Lambert
@@ -34,6 +38,23 @@ vec3 phong_illumination(vec3 Kd, vec3 Ka, vec3 Ks, vec3 I, vec4 n, vec4 l, vec4 
     vec3 phong_specular_term  = Ks * I * pow(max(0, dot(r, v)), q);
 
     return lambert_diffuse_term + ambient_term + phong_specular_term;
+}
+
+vec3 bling_phong_illumination(vec3 Kd, vec3 Ka, vec3 Ks, vec3 I, vec4 n, vec4 l, vec4 v) {
+
+    float q_linha = 80.0;
+
+    vec4 h = (v + l)/length(v + l);
+    // Vetor que define o sentido da reflexão especular ideal.
+    vec4 r = -l + 2 * n * dot(n,l);
+    // Termo difuso utilizando a lei dos cossenos de Lambert
+    vec3 lambert_diffuse_term = Kd * I * max(0, dot(n, l));
+    // Termo ambiente
+    vec3 ambient_term = Ka * vec3(0.2,0.2,0.2);
+    // Termo especular utilizando o modelo de iluminação de Phong
+    vec3 bling_phong_specular_term  = Ks * I * pow(dot(n, h), q_linha);
+
+    return lambert_diffuse_term + ambient_term + bling_phong_specular_term;
 }
 
 void main()
@@ -61,10 +82,10 @@ void main()
     vec3 Kd = vec3(0.08, 0.4, 0.8);
     vec3 Ks = vec3(0.8, 0.8, 0.8);
     vec3 Ka = Kd / 2;
-    float q = 32.0;
     vec3 I = vec3(1.0,1.0,1.0);
 
-    gouraud_color = phong_illumination(Kd, Ka, Ks, I, n, l, v, q);
+    gouraud_phong_color = phong_illumination(Kd, Ka, Ks, I, n, l, v);
+    gouraud_bling_phong_color = phong_illumination(Kd, Ka, Ks, I, n, l, v);
 
 }
 
