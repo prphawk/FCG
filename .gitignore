@@ -1,6 +1,8 @@
 *.depend
+.depend
+.layout
 *.exe
 *.o
 Laboratorio_5.depend
+.gitignore
 /Debug
-*.depend

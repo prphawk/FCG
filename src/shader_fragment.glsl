@@ -42,6 +42,7 @@ uniform sampler2D TextureImage1; //dino
 uniform sampler2D TextureImage2; //penguin
 uniform sampler2D TextureImage3; //coin
 
+
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec3 color;
 
@@ -110,8 +111,8 @@ void main()
             Kd0 = texture(TextureImage1, vec2(U,V)).rgb;
             break;
         case PLANE:
-            U = texcoords.x * 100;
-            V = texcoords.y * 100;
+            U = texcoords.x*100;
+            V = texcoords.y*5;
             Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
             break;
         case PENGUIN:
