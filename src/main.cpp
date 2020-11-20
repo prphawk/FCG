@@ -113,6 +113,8 @@ void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
+bool AABBCollision(glm::vec4 dMax, glm::vec4 dMin, std::string key);
+
 // Definimos uma estrutura que armazenará dados necessários para renderizar
 // cada objeto da cena virtual.
 struct SceneObject
@@ -439,10 +441,7 @@ int main(int argc, char* argv[])
                 glm::vec4 dMax = Matrix_Translate(dinoCoords.x + movement.x, dinoCoords.y + movement.y, dinoCoords.z + movement.z)* Matrix_Scale(2.0f, 2.0f, 2.0f)*bboxCoordsMax["dino"];
                 glm::vec4 dMin = Matrix_Translate(dinoCoords.x + movement.x, dinoCoords.y + movement.y, dinoCoords.z + movement.z)* Matrix_Scale(2.0f, 2.0f, 2.0f)*bboxCoordsMin["dino"];
 
-                if((dMin.x <= bboxCoordsMax["bunny"].x && dMax.x >= bboxCoordsMin["bunny"].x) &&
-                    (dMin.y <= bboxCoordsMax["bunny"].y && dMax.y >= bboxCoordsMin["bunny"].y) &&
-                    (dMin.z <= bboxCoordsMax["bunny"].z && dMax.z >= bboxCoordsMin["bunny"].z))
-                    collision = true;
+                if(AABBCollision(dMax, dMin, "bunny")) collision = true;
             }
 
             if(!collision) dinoCoords += movement;
@@ -553,6 +552,13 @@ int main(int argc, char* argv[])
     glfwTerminate();
 
     return 0;
+}
+
+bool AABBCollision(glm::vec4 dMax, glm::vec4 dMin, std::string key)
+{
+    return ((dMin.x <= bboxCoordsMax[key].x && dMax.x >= bboxCoordsMin[key].x) &&
+                    (dMin.y <= bboxCoordsMax[key].y && dMax.y >= bboxCoordsMin[key].y) &&
+                    (dMin.z <= bboxCoordsMax[key].z && dMax.z >= bboxCoordsMin[key].z));
 }
 
 // Função que carrega uma imagem para ser utilizada como textura
