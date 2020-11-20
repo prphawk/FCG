@@ -28,6 +28,7 @@ uniform mat4 projection;
 #define DEER 6
 #define CLOUD 7
 #define CAT 8
+#define COIN 9
 
 uniform int object_id;
 
@@ -39,7 +40,7 @@ uniform vec4 bbox_max;
 uniform sampler2D TextureImage0; //floor
 uniform sampler2D TextureImage1; //dino
 uniform sampler2D TextureImage2; //penguin
-
+uniform sampler2D TextureImage3; //coin
 
 // O valor de saída ("out") de um Fragment Shader é a cor final do fragmento.
 out vec3 color;
@@ -124,6 +125,12 @@ void main()
             Ka = Kd / 2;
             q = 32.0;
             Kd0 = texture(TextureImage2, vec2(U,V)).rgb;
+            break;
+        case COIN:
+            U = texcoords.x;
+            V = texcoords.y;
+            Kd0 = texture(TextureImage3, vec2(U,V)).rgb;
+            break;
     }
 
     // Espectro da fonte de iluminação

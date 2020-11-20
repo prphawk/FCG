@@ -155,6 +155,8 @@ bool pressing_SPACE = false;
 glm::vec4 dinoCoords = glm::vec4(2.0f,-1.0f,4.0f, 0.0f);
 glm::vec4 deerCoords = glm::vec4(6.0f,-1.3f,10.0f, 0.0f);
 glm::vec4 penguinCoords = glm::vec4(6.0f,-1.0f,-10.0f, 0.0f);
+glm::vec4 coinCoords = glm::vec4(-3.0f,1.0f,3.0f, 0.f);
+
 
 // "g_LeftMouseButtonPressed = true" se o usuário está com o botão esquerdo do mouse
 // pressionado no momento atual. Veja função MouseButtonCallback().
@@ -274,13 +276,10 @@ int main(int argc, char* argv[])
     LoadTextureImage("../../data/floor.png"); // TextureImage1
     LoadTextureImage("../../data/norm.png");  // TextureImage0
     LoadTextureImage("../../data/penguin.png"); // TextureImage2
+    LoadTextureImage("../../data/coin-texture.jpg"); // TextureImage3
 
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
-    ObjModel spheremodel("../../data/sphere.obj");
-    ComputeNormals(&spheremodel);
-    BuildTrianglesAndAddToVirtualScene(&spheremodel);
-
     ObjModel bunnymodel("../../data/bunny.obj");
     ComputeNormals(&bunnymodel);
     BuildTrianglesAndAddToVirtualScene(&bunnymodel);
@@ -297,11 +296,11 @@ int main(int argc, char* argv[])
     ComputeNormals(&penguinmodel);
     BuildTrianglesAndAddToVirtualScene(&penguinmodel);
     /*
-
     ObjModel cloudmodel("../../data/cloud.obj");
     ComputeNormals(&cloudmodel);
     BuildTrianglesAndAddToVirtualScene(&cloudmodel);
-        ObjModel alligatormodel("../../data/alligator.obj");
+
+    ObjModel alligatormodel("../../data/alligator.obj");
     ComputeNormals(&alligatormodel);
     BuildTrianglesAndAddToVirtualScene(&alligatormodel);
     */
@@ -314,19 +313,22 @@ int main(int argc, char* argv[])
     ComputeNormals(&catmodel);
     BuildTrianglesAndAddToVirtualScene(&catmodel);
 
+    ObjModel coinmodel("../../data/coin.obj");
+    ComputeNormals(&coinmodel);
+    BuildTrianglesAndAddToVirtualScene(&coinmodel);
+
+    ObjModel pedestalmodel("../../data/pedestal.obj");
+    ComputeNormals(&pedestalmodel);
+    BuildTrianglesAndAddToVirtualScene(&pedestalmodel);
+
     if ( argc > 1 )
     {
         ObjModel model(argv[1]);
         BuildTrianglesAndAddToVirtualScene(&model);
     }
 
-    // Inicializamos o código para renderização de texto.
     TextRendering_Init();
-
-    // Habilitamos o Z-buffer. Veja slides 104-116 do documento Aula_09_Projecoes.pdf.
     glEnable(GL_DEPTH_TEST);
-
-    // Habilitamos o Backface Culling. Veja slides 23-34 do documento Aula_13_Clipping_and_Culling.pdf.
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
     glFrontFace(GL_CCW);
@@ -357,11 +359,10 @@ int main(int argc, char* argv[])
             deltaTime -= 0.5f;
 
             dinoCoords.x -= 0.1f;
-
-
         }
 
         penguinCoords.y -= cos(nowTime) * 0.0015f;
+        coinCoords.y -= cos(2*nowTime) * 0.003f;
 
 
         // Note que, no sistema de coordenadas da câmera, os planos near e far
@@ -452,25 +453,12 @@ int main(int argc, char* argv[])
         #define DEER 6
         #define CLOUD 7
         #define CAT 8
+        #define COIN 9
+        #define PEDESTAL 10
+
         #define PI 3.1415
 
         #define DEER_SCALE 0.006
-
-        // Desenhamos o modelo da esfera
-        model = Matrix_Translate(-1.0f,0.0f,0.0f)
-              * Matrix_Rotate_Z(0.6f)
-              * Matrix_Rotate_X(0.2f)
-              * Matrix_Rotate_Y(g_AngleY + nowTime * 0.1f);
-        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, SPHERE);
-        DrawVirtualObject("sphere");
-
-        // Desenhamos o modelo do coelho
-        model = Matrix_Translate(1.0f,0.0f,0.0f)
-              * Matrix_Rotate_X(g_AngleX + nowTime * 0.1f);
-        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, BUNNY);
-        DrawVirtualObject("bunny");
 
         // Desenhamos o plano do chão
         model = Matrix_Translate(0.0f,-1.1f,0.0f)
@@ -482,49 +470,56 @@ int main(int argc, char* argv[])
         // Desenhamos o dino
         model = Matrix_Translate(dinoCoords.x, dinoCoords.y, dinoCoords.z)
         * Matrix_Scale(2.0f, 2.0f, 2.0f);
-        //* Matrix_Rotate_Y(-z);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, DINO);
         DrawVirtualObject("dino");
 
-        model = Matrix_Translate(penguinCoords.x,penguinCoords.y,penguinCoords.z)
-            * Matrix_Scale(2.0f, 2.0f, 2.0f);
-        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, PENGUIN);
-        DrawVirtualObject("penguin");
+        for(int i = 0; i < 3; i++) {
+            model = Matrix_Translate(penguinCoords.x + 8.0f * i,penguinCoords.y,penguinCoords.z)
+                * Matrix_Scale(2.0f, 2.0f, 2.0f);
+                glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+                glUniform1i(object_id_uniform, PENGUIN);
+                DrawVirtualObject("penguin");
 
-        model = Matrix_Translate(penguinCoords.x + 8.0f,penguinCoords.y,penguinCoords.z)
-            * Matrix_Scale(2.0f, 2.0f, 2.0f);
-        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, PENGUIN);
-        DrawVirtualObject("penguin");
+            model = Matrix_Translate(deerCoords.x + 8.0f * i,deerCoords.y,deerCoords.z)
+                * Matrix_Scale(0.006f, 0.006f, 0.006f)
+                * Matrix_Rotate_Y(PI/2.0f);
+            glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(object_id_uniform, DEER);
+            DrawVirtualObject("deer");
 
-        model = Matrix_Translate(deerCoords.x,deerCoords.y,deerCoords.z)
-            * Matrix_Scale(0.006f, 0.006f, 0.006f)
-            * Matrix_Rotate_Y(PI/2.0f);
-        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, DEER);
-        DrawVirtualObject("deer");
 
-        model = Matrix_Translate(deerCoords.x + 8.0f,deerCoords.y,deerCoords.z)
-            * Matrix_Scale(DEER_SCALE, DEER_SCALE, DEER_SCALE)
-            * Matrix_Rotate_Y(PI/2.0f);
-        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, DEER);
-        DrawVirtualObject("deer");
-
-        model = Matrix_Translate(deerCoords.x + 8.0f,deerCoords.y,deerCoords.z)
-            * Matrix_Scale(DEER_SCALE, DEER_SCALE, DEER_SCALE)
-            * Matrix_Rotate_Y(PI/2.0f);
-        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, DEER);
-        DrawVirtualObject("deer");
+            model = Matrix_Translate(deerCoords.x + 5.0f * i,deerCoords.y,deerCoords.z)
+                * Matrix_Scale(0.1f, 0.1f, 0.1f)
+                * Matrix_Rotate_Y(PI/2.0f);
+            glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(object_id_uniform, PEDESTAL);
+            DrawVirtualObject("pedestal");
+        }
 
         model = Matrix_Translate(3.0f,0.0f,3.0f)
             * Matrix_Scale(2.1f, 2.1f, 2.1f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, CAT);
         DrawVirtualObject("cat");
+
+        for(int i = 0; i < 5; i++) {
+
+            float coord_x = coinCoords.x + 5.0f * i;
+            float coord_z = coinCoords.z + 5.0f * i;
+
+            if(coord_x != camera_position_c.x && coord_x != camera_position_c.x ||
+               coord_z != camera_position_c.z && coord_z != camera_position_c.z) {
+
+                model = Matrix_Translate(coord_x,coinCoords.y,coord_z)
+                    * Matrix_Scale(0.5f, 0.5f, 0.5f)
+                    * Matrix_Rotate_X(PI/2.0f)
+                    * Matrix_Rotate_Z(g_AngleZ + nowTime * 0.7f);
+                glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+                glUniform1i(object_id_uniform, COIN);
+                DrawVirtualObject("coin");
+            }
+        }
 
         TextRendering_ShowEulerAngles(window);
         TextRendering_ShowProjection(window);
