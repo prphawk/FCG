@@ -76,7 +76,7 @@ void BuildTrianglesAndAddToVirtualScene(ObjModel*); // Constrói representação
 void ComputeNormals(ObjModel* model); // Computa normais de um ObjModel, caso não existam.
 void LoadShadersFromFiles(); // Carrega os shaders de vértice e fragmento, criando um programa de GPU
 void LoadTextureImage(const char* filename); // Função que carrega imagens de textura
-void DrawVirtualObject(const char* object_name); // Desenha um objeto armazenado em g_VirtualScene
+void DrawVirtualObject(const char* object_name, const char* name, int type); // Desenha um objeto armazenado em g_VirtualScene
 GLuint LoadShader_Vertex(const char* filename);   // Carrega um vertex shader
 GLuint LoadShader_Fragment(const char* filename); // Carrega um fragment shader
 void LoadShader(const char* filename, GLuint shader_id); // Função utilizada pelas duas acima
@@ -156,6 +156,9 @@ glm::vec4 dinoCoords = glm::vec4(200.0f,-1.0f,0.0f,1.0f);
 glm::vec4 deerCoords = glm::vec4(6.0f,-1.3f,10.0f, 0.0f);
 glm::vec4 penguinCoords = glm::vec4(6.0f,-1.0f,-10.0f, 0.0f);
 
+std::map<std::string, glm::vec4> bboxCoordsMin;
+std::map<std::string, glm::vec4> bboxCoordsMax;
+
 // "g_LeftMouseButtonPressed = true" se o usuário está com o botão esquerdo do mouse
 // pressionado no momento atual. Veja função MouseButtonCallback().
 bool g_LeftMouseButtonPressed = false;
@@ -170,6 +173,8 @@ float g_CameraTheta = 0.0f; // Ângulo no plano ZX em relação ao eixo Z
 float g_CameraPhi = 90.0f;   // Ângulo em relação ao eixo Y
 float g_CameraDistance = 15.5f; // Distância da câmera para a origem
 float g_CameraHeight = 4.0f; // Distância da câmera para a origem
+
+bool collision = false;
 
 // Variável que controla o tipo de projeção utilizada: perspectiva ou ortográfica.
 bool g_UsePerspectiveProjection = true;
@@ -342,11 +347,12 @@ int main(int argc, char* argv[])
     float lastTime = (float)glfwGetTime();
     float lastTimeJmp = (float)glfwGetTime();
     float deltaTime = 0.0f, nowTime = 0.0f;
+    bool first_iteration = false;
 
     // Ficamos em loop, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
-
+        collision = false;
 
         nowTime = (float)glfwGetTime();
         deltaTime = (float)nowTime - lastTime;
@@ -421,7 +427,6 @@ int main(int argc, char* argv[])
 
             view = Matrix_Camera_View(glm::vec4(dinoCoords.x+g_CameraDistance, g_CameraHeight, dinoCoords.z, 1.0f), camera_view_vector, camera_up_vector);
 
-
             glm::vec4 movement = glm::vec4(0.0f,0.0f,0.0f,0.0f);
 
             if(pressing_W) movement = (noYMatrix * -w_vector) * speed;
@@ -429,7 +434,19 @@ int main(int argc, char* argv[])
             if(pressing_D) movement = u_vector * speed;
             if(pressing_A) movement = -u_vector * speed;
 
-            dinoCoords += movement;
+            if(!first_iteration)
+            {
+                glm::vec4 dMax = Matrix_Translate(dinoCoords.x + movement.x, dinoCoords.y + movement.y, dinoCoords.z + movement.z)* Matrix_Scale(2.0f, 2.0f, 2.0f)*bboxCoordsMax["dino"];
+                glm::vec4 dMin = Matrix_Translate(dinoCoords.x + movement.x, dinoCoords.y + movement.y, dinoCoords.z + movement.z)* Matrix_Scale(2.0f, 2.0f, 2.0f)*bboxCoordsMin["dino"];
+
+                if((dMin.x <= bboxCoordsMax["bunny"].x && dMax.x >= bboxCoordsMin["bunny"].x) &&
+                    (dMin.y <= bboxCoordsMax["bunny"].y && dMax.y >= bboxCoordsMin["bunny"].y) &&
+                    (dMin.z <= bboxCoordsMax["bunny"].z && dMax.z >= bboxCoordsMin["bunny"].z))
+                    collision = true;
+            }
+
+            if(!collision) dinoCoords += movement;
+            //else dinoCoords -= movement;
 
         } else {
 
@@ -452,7 +469,8 @@ int main(int argc, char* argv[])
             if(pressing_D) movement = u_vector * speed;
             if(pressing_A) movement = -u_vector * speed;
 
-            dinoCoords += movement;
+            if(!collision) dinoCoords += movement;
+            //else dinoCoords -= movement;
         }
 
         glm::mat4 model = Matrix_Identity(); // Transformação identidade de modelagem
@@ -473,6 +491,14 @@ int main(int argc, char* argv[])
 
         #define DEER_SCALE 0.006
 
+        // Desenhamos o dinossauro
+        model = Matrix_Translate(dinoCoords.x, dinoCoords.y, dinoCoords.z)
+        * Matrix_Scale(2.0f, 2.0f, 2.0f);
+        //* Matrix_Rotate_Y(-z);
+        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(object_id_uniform, DINO);
+        DrawVirtualObject("dino", "dino", 1);
+
         // Desenhamos o modelo da esfera
         model = Matrix_Translate(-1.0f,0.0f,0.0f)
               * Matrix_Rotate_Z(0.6f)
@@ -480,80 +506,42 @@ int main(int argc, char* argv[])
               * Matrix_Rotate_Y(g_AngleY + nowTime * 0.1f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, SPHERE);
-        DrawVirtualObject("sphere");
+        DrawVirtualObject("sphere", "", 0);
 
         // Desenhamos o modelo do coelho
         model = Matrix_Translate(1.0f,0.0f,0.0f)
               * Matrix_Rotate_X(g_AngleX + nowTime * 0.1f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, BUNNY);
-        DrawVirtualObject("bunny");
+        DrawVirtualObject("bunny", "bunny", 1);
+        bboxCoordsMax["bunny"] = Matrix_Translate(1.0f,0.0f,0.0f)*bboxCoordsMax["bunny"];
+        bboxCoordsMin["bunny"] = Matrix_Translate(1.0f,0.0f,0.0f)*bboxCoordsMax["bunny"];
 
         // Desenhamos o plano do chão
         model = Matrix_Translate(0.0f,-1.1f,0.0f)
                 * Matrix_Scale(400.0f, 1.0f, 4.94*2);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, PLANE);
-        DrawVirtualObject("plane");
+        DrawVirtualObject("plane", "", 0);
 
         // Desenhamos as paredes
         model = Matrix_Translate(0.0f, 2.39f, -9.94f)
                 * Matrix_Scale(800.0f, 7.2, 1.0f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, CUBE);
-        DrawVirtualObject("cube");
-        model = Matrix_Translate(0.0f, 2.39f, 9.94f)
-                * Matrix_Scale(800.0f, 7.2, 1.0f);
-        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, CUBE);
-        DrawVirtualObject("cube");
+        DrawVirtualObject("cube", "wall1", 1);
+        bboxCoordsMax["wall1"] = model*bboxCoordsMax["wall1"];
+        bboxCoordsMax["wall1"] = model*bboxCoordsMax["wall1"];
 
-        // Desenhamos o dino
-        model = Matrix_Translate(dinoCoords.x, dinoCoords.y, dinoCoords.z)
-        * Matrix_Scale(2.0f, 2.0f, 2.0f);
-        //* Matrix_Rotate_Y(-z);
-        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, DINO);
-        DrawVirtualObject("dino");
+        //model = Matrix_Translate(0.0f, 2.39f, 9.94f)
+        //        * Matrix_Scale(800.0f, 7.2, 1.0f);
+        //glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        //glUniform1i(object_id_uniform, CUBE);
+        //DrawVirtualObject("cube", "wall2", 1);
+        //bboxCoordsMax["wall2"] = model*bboxCoordsMax["wall2"];
+        //bboxCoordsMax["wall2"] = model*bboxCoordsMax["wall2"];
 
-        model = Matrix_Translate(penguinCoords.x,penguinCoords.y,penguinCoords.z)
-            * Matrix_Scale(2.0f, 2.0f, 2.0f);
-        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, PENGUIN);
-        DrawVirtualObject("penguin");
-
-        model = Matrix_Translate(penguinCoords.x + 8.0f,penguinCoords.y,penguinCoords.z)
-            * Matrix_Scale(2.0f, 2.0f, 2.0f);
-        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, PENGUIN);
-        DrawVirtualObject("penguin");
-
-        model = Matrix_Translate(deerCoords.x,deerCoords.y,deerCoords.z)
-            * Matrix_Scale(0.006f, 0.006f, 0.006f)
-            * Matrix_Rotate_Y(PI/2.0f);
-        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, DEER);
-        DrawVirtualObject("deer");
-
-        model = Matrix_Translate(deerCoords.x + 8.0f,deerCoords.y,deerCoords.z)
-            * Matrix_Scale(DEER_SCALE, DEER_SCALE, DEER_SCALE)
-            * Matrix_Rotate_Y(PI/2.0f);
-        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, DEER);
-        DrawVirtualObject("deer");
-
-        model = Matrix_Translate(deerCoords.x + 8.0f,deerCoords.y,deerCoords.z)
-            * Matrix_Scale(DEER_SCALE, DEER_SCALE, DEER_SCALE)
-            * Matrix_Rotate_Y(PI/2.0f);
-        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, DEER);
-        DrawVirtualObject("deer");
-
-        model = Matrix_Translate(3.0f,0.0f,3.0f)
-            * Matrix_Scale(2.1f, 2.1f, 2.1f);
-        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, CAT);
-        DrawVirtualObject("cat");
+        //printf("%i", collision);
 
         TextRendering_ShowEulerAngles(window);
         TextRendering_ShowProjection(window);
@@ -623,7 +611,7 @@ void LoadTextureImage(const char* filename)
 
 // Função que desenha um objeto armazenado em g_VirtualScene. Veja definição
 // dos objetos na função BuildTrianglesAndAddToVirtualScene().
-void DrawVirtualObject(const char* object_name)
+void DrawVirtualObject(const char* object_name, const char* name, int type)
 {
     // "Ligamos" o VAO. Informamos que queremos utilizar os atributos de
     // vértices apontados pelo VAO criado pela função BuildTrianglesAndAddToVirtualScene(). Veja
@@ -636,6 +624,14 @@ void DrawVirtualObject(const char* object_name)
     glm::vec3 bbox_max = g_VirtualScene[object_name].bbox_max;
     glUniform4f(bbox_min_uniform, bbox_min.x, bbox_min.y, bbox_min.z, 1.0f);
     glUniform4f(bbox_max_uniform, bbox_max.x, bbox_max.y, bbox_max.z, 1.0f);
+
+    switch(type)
+    {
+        case 1:
+            bboxCoordsMin[name] = (glm::vec4(bbox_min, 1.0f));
+            bboxCoordsMax[name] = (glm::vec4(bbox_max, 1.0f));
+        break;
+    }
 
     // Pedimos para a GPU rasterizar os vértices dos eixos XYZ
     // apontados pelo VAO como linhas. Veja a definição de
