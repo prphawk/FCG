@@ -446,7 +446,6 @@ int main(int argc, char* argv[])
                 if(AABBCollision(dMax, dMin, "wall1")) collision = true;
                 if(AABBCollision(dMax, dMin, "wall2")) collision = true;
 
-
             }
 
             if(!collision) dinoCoords += movement;
@@ -539,6 +538,7 @@ int main(int argc, char* argv[])
         bboxCoordsMax["wall1"] = model*bboxCoordsMax["wall1"];
         bboxCoordsMin["wall1"] = model*bboxCoordsMin["wall1"];
 
+
         for(int i = 0; i < 3; i++) {
             model = Matrix_Translate(penguinCoords.x + 8.0f * i,penguinCoords.y,penguinCoords.z)
                 * Matrix_Scale(2.0f, 2.0f, 2.0f);
@@ -554,6 +554,8 @@ int main(int argc, char* argv[])
             DrawVirtualObject("deer", ("deer" + std::to_string(i)).c_str(), 1);
             bboxCoordsMax[("deer" + std::to_string(i)).c_str()] = model*bboxCoordsMax[("deer" + std::to_string(i)).c_str()];
             bboxCoordsMin[("deer" + std::to_string(i)).c_str()] = model*bboxCoordsMin[("deer" + std::to_string(i)).c_str()];
+
+
 
             model = Matrix_Translate(deerCoords.x + 5.0f * i,deerCoords.y,deerCoords.z)
                 * Matrix_Scale(0.1f, 0.1f, 0.1f)
