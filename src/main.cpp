@@ -436,13 +436,12 @@ int main(int argc, char* argv[])
             if(pressing_D) movement = u_vector * speed;
             if(pressing_A) movement = -u_vector * speed;
 
-            if(!first_iteration)
-            {
-                glm::vec4 dMax = Matrix_Translate(dinoCoords.x + movement.x, dinoCoords.y + movement.y, dinoCoords.z + movement.z)* Matrix_Scale(2.0f, 2.0f, 2.0f)*bboxCoordsMax["dino"];
-                glm::vec4 dMin = Matrix_Translate(dinoCoords.x + movement.x, dinoCoords.y + movement.y, dinoCoords.z + movement.z)* Matrix_Scale(2.0f, 2.0f, 2.0f)*bboxCoordsMin["dino"];
+            glm::vec4 dMax = Matrix_Translate(dinoCoords.x + movement.x, dinoCoords.y + movement.y, dinoCoords.z + movement.z)* Matrix_Scale(2.0f, 2.0f, 2.0f)*bboxCoordsMax["dino"];
+            glm::vec4 dMin = Matrix_Translate(dinoCoords.x + movement.x, dinoCoords.y + movement.y, dinoCoords.z + movement.z)* Matrix_Scale(2.0f, 2.0f, 2.0f)*bboxCoordsMin["dino"];
 
-                if(AABBCollision(dMax, dMin, "bunny")) collision = true;
-            }
+            if(AABBCollision(dMax, dMin, "bunny")) collision = true;
+            if(AABBCollision(dMax, dMin, "wall1")) collision = true;
+            if(AABBCollision(dMax, dMin, "wall2")) collision = true;
 
             if(!collision) dinoCoords += movement;
             //else dinoCoords -= movement;
@@ -514,7 +513,7 @@ int main(int argc, char* argv[])
         glUniform1i(object_id_uniform, BUNNY);
         DrawVirtualObject("bunny", "bunny", 1);
         bboxCoordsMax["bunny"] = Matrix_Translate(1.0f,0.0f,0.0f)*bboxCoordsMax["bunny"];
-        bboxCoordsMin["bunny"] = Matrix_Translate(1.0f,0.0f,0.0f)*bboxCoordsMax["bunny"];
+        bboxCoordsMin["bunny"] = Matrix_Translate(1.0f,0.0f,0.0f)*bboxCoordsMin["bunny"];
 
         // Desenhamos o plano do chão
         model = Matrix_Translate(0.0f,-1.1f,0.0f)
@@ -530,7 +529,7 @@ int main(int argc, char* argv[])
         glUniform1i(object_id_uniform, CUBE);
         DrawVirtualObject("cube", "wall1", 1);
         bboxCoordsMax["wall1"] = model*bboxCoordsMax["wall1"];
-        bboxCoordsMax["wall1"] = model*bboxCoordsMax["wall1"];
+        bboxCoordsMin["wall1"] = model*bboxCoordsMin["wall1"];
 
         model = Matrix_Translate(0.0f, 2.39f, 9.94f)
                 * Matrix_Scale(800.0f, 7.2, 1.0f);
@@ -538,7 +537,7 @@ int main(int argc, char* argv[])
         glUniform1i(object_id_uniform, CUBE);
         DrawVirtualObject("cube", "wall2", 1);
         bboxCoordsMax["wall2"] = model*bboxCoordsMax["wall2"];
-        bboxCoordsMax["wall2"] = model*bboxCoordsMax["wall2"];
+        bboxCoordsMin["wall2"] = model*bboxCoordsMin["wall2"];
 
         TextRendering_ShowEulerAngles(window);
         TextRendering_ShowProjection(window);
