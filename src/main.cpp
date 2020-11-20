@@ -152,8 +152,9 @@ bool pressing_W = false;
 bool pressing_S = false;
 bool pressing_SPACE = false;
 
-glm::vec4 DEFAULT_DINO = glm::vec4(-4.0f,-1.0f,0.0f,1.0f);
-glm::vec4 dinoCoords = DEFAULT_DINO;
+glm::vec4 dinoCoords = glm::vec4(200.0f,-1.0f,0.0f,1.0f);
+glm::vec4 deerCoords = glm::vec4(6.0f,-1.3f,10.0f, 0.0f);
+glm::vec4 penguinCoords = glm::vec4(6.0f,-1.0f,-10.0f, 0.0f);
 
 // "g_LeftMouseButtonPressed = true" se o usuário está com o botão esquerdo do mouse
 // pressionado no momento atual. Veja função MouseButtonCallback().
@@ -167,11 +168,8 @@ bool g_MiddleMouseButtonPressed = false; // Análogo para botão do meio do mous
 // renderização.
 float g_CameraTheta = 0.0f; // Ângulo no plano ZX em relação ao eixo Z
 float g_CameraPhi = 90.0f;   // Ângulo em relação ao eixo Y
-float g_CameraDistance = 5.5f; // Distância da câmera para a origem
+float g_CameraDistance = 15.5f; // Distância da câmera para a origem
 float g_CameraHeight = 4.0f; // Distância da câmera para a origem
-
-glm::vec4 DEFAULT_C = glm::vec4(0.0f,40.0,5.0f,1.0f);
-glm::vec4 camera_position_c = DEFAULT_C;
 
 // Variável que controla o tipo de projeção utilizada: perspectiva ou ortográfica.
 bool g_UsePerspectiveProjection = true;
@@ -231,7 +229,7 @@ int main(int argc, char* argv[])
     // Criamos uma janela do sistema operacional, com 800 colunas e 600 linhas
     // de pixels, e com título "INF01047 ...".
     GLFWwindow* window;
-    window = glfwCreateWindow(800, 600, "INF01047 - 00301639 - Mayra Cademartori", NULL, NULL);
+    window = glfwCreateWindow(800, 600, "INF01047 - Trabalho Final", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -271,8 +269,8 @@ int main(int argc, char* argv[])
     LoadShadersFromFiles();
 
     // Carregamos duas imagens para serem utilizadas como textura
-    LoadTextureImage("../../data/floor.png");  // TextureImageDinoNorm
-    LoadTextureImage("../../data/Dino2.jpeg"); // TextureImage0
+    LoadTextureImage("../../data/floor.png"); // TextureImage1
+    LoadTextureImage("../../data/norm.png");  // TextureImage0
     LoadTextureImage("../../data/penguin.png"); // TextureImage2
 
 
@@ -292,6 +290,30 @@ int main(int argc, char* argv[])
     ObjModel dinomodel("../../data/dino.obj");
     ComputeNormals(&dinomodel);
     BuildTrianglesAndAddToVirtualScene(&dinomodel);
+
+    ObjModel penguinmodel("../../data/penguin.obj");
+    ComputeNormals(&penguinmodel);
+    BuildTrianglesAndAddToVirtualScene(&penguinmodel);
+    /*
+    ObjModel cloudmodel("../../data/cloud.obj");
+    ComputeNormals(&cloudmodel);
+    BuildTrianglesAndAddToVirtualScene(&cloudmodel);
+        ObjModel alligatormodel("../../data/alligator.obj");
+    ComputeNormals(&alligatormodel);
+    BuildTrianglesAndAddToVirtualScene(&alligatormodel);
+    */
+
+    ObjModel deermodel("../../data/deer.obj");
+    ComputeNormals(&deermodel);
+    BuildTrianglesAndAddToVirtualScene(&deermodel);
+
+    ObjModel catmodel("../../data/cat.obj");
+    ComputeNormals(&catmodel);
+    BuildTrianglesAndAddToVirtualScene(&catmodel);
+
+    ObjModel cubemodel("../../data/cube.obj");
+    ComputeNormals(&cubemodel);
+    BuildTrianglesAndAddToVirtualScene(&cubemodel);
 
     if ( argc > 1 )
     {
@@ -316,18 +338,35 @@ int main(int argc, char* argv[])
     glm::mat4 the_model;
     glm::mat4 the_view;
 
-    //glm::vec4 camera_position_c  = DEFAULT_C;
 
-
+    float lastTime = (float)glfwGetTime();
+    float lastTimeJmp = (float)glfwGetTime();
+    float deltaTime = 0.0f, nowTime = 0.0f;
 
     // Ficamos em loop, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
 
+
+        nowTime = (float)glfwGetTime();
+        deltaTime = (float)nowTime - lastTime;
+
+        while (deltaTime >= 0.1f) {
+
+            lastTime = nowTime;
+
+            deltaTime -= 0.5f;
+
+            //dinoCoords.x -= 0.1f;
+        }
+
+        penguinCoords.y -= cos(nowTime) * 0.0015f;
+
+
         // Note que, no sistema de coordenadas da câmera, os planos near e far
         // estão no sentido negativo! Veja slides 176-204 do documento Aula_09_Projecoes.pdf.
         float nearplane = -0.1f;  // Posição do "near plane"
-        float farplane  = -50.0f; // Posição do "far plane"
+        float farplane  = -500.0f; // Posição do "far plane"
         float speed = 0.1f;
 
         // Aqui executamos as operações de renderização
@@ -338,20 +377,12 @@ int main(int argc, char* argv[])
         // Conversaremos sobre sistemas de cores nas aulas de Modelos de Iluminação.
         //
         //           R     G     B     A
-        glClearColor(0.9f, 1.0f, 1.0f, 1.0f);
+        glClearColor(0.85f, 1.0f, 1.0f, 1.0f);
 
-        // "Pintamos" todos os pixels do framebuffer com a cor definida acima,
-        // e também resetamos todos os pixels do Z-buffer (depth buffer).
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Pedimos para a GPU utilizar o programa de GPU criado acima (contendo
-        // os shaders de vértice e fragmentos).
         glUseProgram(program_id);
 
-        // Computamos a posição da câmera utilizando coordenadas esféricas.  As
-        // variáveis g_CameraDistance, g_CameraPhi, e g_CameraTheta são
-        // controladas pelo mouse do usuário. Veja as funções CursorPosCallback()
-        // e ScrollCallback().
         float r = 40.0;
         float y = r*sin(g_CameraPhi);
         float z = r*cos(g_CameraPhi)*cos(g_CameraTheta);
@@ -362,23 +393,15 @@ int main(int argc, char* argv[])
         glm::mat4 view;
 
         // Agora computamos a matriz de Projeção.
-
         glm::mat4 projection;
 
         if (g_UsePerspectiveProjection)
         {
-            // Projeção Perspectiva.
-            // Para definição do field of view (FOV), veja slides 205-215 do documento Aula_09_Projecoes.pdf.
             float field_of_view = 3.141592 / 3.0f;
             projection = Matrix_Perspective(field_of_view, g_ScreenRatio, nearplane, farplane);
         }
         else
         {
-            // Projeção Ortográfica.
-            // Para definição dos valores l, r, b, t ("left", "right", "bottom", "top"),
-            // PARA PROJEÇÃO ORTOGRÁFICA veja slides 219-224 do documento Aula_09_Projecoes.pdf.
-            // Para simular um "zoom" ortográfico, computamos o valor de "t"
-            // utilizando a variável g_CameraDistance.
             float t = 1.5f*g_CameraDistance/2.5f;
             float b = -t;
             float r = t*g_ScreenRatio;
@@ -388,17 +411,16 @@ int main(int argc, char* argv[])
 
         if(g_UseFreeCamera) {
 
-            camera_position_c.y = g_CameraHeight;
+            camera_up_vector = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
 
-            camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
-
-            camera_view_vector = (dinoCoords-camera_position_c)*Matrix_Rotate_X(g_CameraPhi)*Matrix_Rotate_Y(-g_CameraTheta);
-
+            camera_view_vector = glm::vec4(0.0, 0.0, 1.0, 0.0)*Matrix_Rotate_X(-g_CameraPhi)*Matrix_Rotate_Y(-g_CameraTheta);
+            camera_view_vector = camera_view_vector/norm(camera_view_vector);
             glm::vec4 w_vector = -camera_view_vector / norm(camera_view_vector);
             glm::vec4 up_cross_w_vector = crossproduct(camera_up_vector, w_vector);
             glm::vec4 u_vector = up_cross_w_vector / norm(up_cross_w_vector);
 
-            view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
+            view = Matrix_Camera_View(glm::vec4(dinoCoords.x+g_CameraDistance, g_CameraHeight, dinoCoords.z, 1.0f), camera_view_vector, camera_up_vector);
+
 
             glm::vec4 movement = glm::vec4(0.0f,0.0f,0.0f,0.0f);
 
@@ -406,24 +428,18 @@ int main(int argc, char* argv[])
             if(pressing_S) movement = (noYMatrix * w_vector) * speed;
             if(pressing_D) movement = u_vector * speed;
             if(pressing_A) movement = -u_vector * speed;
-            if(pressing_SPACE) camera_position_c = DEFAULT_C;
 
-            camera_position_c += movement;
             dinoCoords += movement;
 
         } else {
 
-            // Abaixo definimos as varáveis que efetivamente definem a câmera virtual.
-            // Veja slides 195-227 e 229-234 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
-            camera_position_c  = glm::vec4(x,y,z,1.0f); // Ponto "c", centro da câmera
+            glm::vec4 camera_position_c  = glm::vec4(x,y,z,1.0f); // Ponto "c", centro da câmera
             camera_view_vector = glm::vec4(0.0f,0.0f, 0.0f, 1.0f)-camera_position_c; // Vetor "view", sentido para onde a câmera está virada
             camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
 
-            // Computamos a matriz "View" utilizando os parâmetros da câmera para
-            // definir o sistema de coordenadas da câmera.  Veja slides 2-14, 184-190 e 236-242 do documento Aula_08_Sistemas_de_Coordenadas.pdf.
             view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
 
-                        glm::vec4 w_vector = -camera_view_vector / norm(camera_view_vector);
+            glm::vec4 w_vector = -camera_view_vector / norm(camera_view_vector);
             glm::vec4 up_cross_w_vector = crossproduct(camera_up_vector, w_vector);
             glm::vec4 u_vector = up_cross_w_vector / norm(up_cross_w_vector);
 
@@ -440,10 +456,6 @@ int main(int argc, char* argv[])
         }
 
         glm::mat4 model = Matrix_Identity(); // Transformação identidade de modelagem
-
-        // Enviamos as matrizes "view" e "projection" para a placa de vídeo
-        // (GPU). Veja o arquivo "shader_vertex.glsl", onde estas são
-        // efetivamente aplicadas em todos os pontos.
         glUniformMatrix4fv(view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 
@@ -452,80 +464,108 @@ int main(int argc, char* argv[])
         #define PLANE  2
         #define DINO   3
         #define PENGUIN  4
+        #define ALLIGATOR 5
+        #define DEER 6
+        #define CLOUD 7
+        #define CAT 8
+        #define CUBE 9
+        #define PI 3.1415
+
+        #define DEER_SCALE 0.006
 
         // Desenhamos o modelo da esfera
         model = Matrix_Translate(-1.0f,0.0f,0.0f)
               * Matrix_Rotate_Z(0.6f)
               * Matrix_Rotate_X(0.2f)
-              * Matrix_Rotate_Y(g_AngleY + (float)glfwGetTime() * 0.1f);
+              * Matrix_Rotate_Y(g_AngleY + nowTime * 0.1f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, SPHERE);
         DrawVirtualObject("sphere");
 
         // Desenhamos o modelo do coelho
         model = Matrix_Translate(1.0f,0.0f,0.0f)
-              * Matrix_Rotate_X(g_AngleX + (float)glfwGetTime() * 0.1f);
+              * Matrix_Rotate_X(g_AngleX + nowTime * 0.1f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, BUNNY);
         DrawVirtualObject("bunny");
 
         // Desenhamos o plano do chão
         model = Matrix_Translate(0.0f,-1.1f,0.0f)
-        * Matrix_Scale(20.0f, 20.0f, 20.0f);
+                * Matrix_Scale(400.0f, 1.0f, 4.94*2);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, PLANE);
         DrawVirtualObject("plane");
 
+        // Desenhamos as paredes
+        model = Matrix_Translate(0.0f, 2.39f, -9.94f)
+                * Matrix_Scale(800.0f, 7.2, 1.0f);
+        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(object_id_uniform, CUBE);
+        DrawVirtualObject("cube");
+        model = Matrix_Translate(0.0f, 2.39f, 9.94f)
+                * Matrix_Scale(800.0f, 7.2, 1.0f);
+        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(object_id_uniform, CUBE);
+        DrawVirtualObject("cube");
+
         // Desenhamos o dino
         model = Matrix_Translate(dinoCoords.x, dinoCoords.y, dinoCoords.z)
-        * Matrix_Scale(2.0f, 2.0f, 2.0f)
-        * Matrix_Rotate_Y(90);
+        * Matrix_Scale(2.0f, 2.0f, 2.0f);
         //* Matrix_Rotate_Y(-z);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, DINO);
         DrawVirtualObject("dino");
 
-        // Pegamos um vértice com coordenadas de modelo (0.5, 0.5, 0.5, 1) e o
-        // passamos por todos os sistemas de coordenadas armazenados nas
-        // matrizes the_model, the_view, e the_projection; e escrevemos na tela
-        // as matrizes e pontos resultantes dessas transformações.
-        //glm::vec4 p_model(0.5f, 0.5f, 0.5f, 1.0f);
-        //TextRendering_ShowModelViewProjection(window, projection, view, model, p_model);
+        model = Matrix_Translate(penguinCoords.x,penguinCoords.y,penguinCoords.z)
+            * Matrix_Scale(2.0f, 2.0f, 2.0f);
+        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(object_id_uniform, PENGUIN);
+        DrawVirtualObject("penguin");
 
-        // Imprimimos na tela os ângulos de Euler que controlam a rotação do
-        // terceiro cubo.
+        model = Matrix_Translate(penguinCoords.x + 8.0f,penguinCoords.y,penguinCoords.z)
+            * Matrix_Scale(2.0f, 2.0f, 2.0f);
+        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(object_id_uniform, PENGUIN);
+        DrawVirtualObject("penguin");
+
+        model = Matrix_Translate(deerCoords.x,deerCoords.y,deerCoords.z)
+            * Matrix_Scale(0.006f, 0.006f, 0.006f)
+            * Matrix_Rotate_Y(PI/2.0f);
+        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(object_id_uniform, DEER);
+        DrawVirtualObject("deer");
+
+        model = Matrix_Translate(deerCoords.x + 8.0f,deerCoords.y,deerCoords.z)
+            * Matrix_Scale(DEER_SCALE, DEER_SCALE, DEER_SCALE)
+            * Matrix_Rotate_Y(PI/2.0f);
+        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(object_id_uniform, DEER);
+        DrawVirtualObject("deer");
+
+        model = Matrix_Translate(deerCoords.x + 8.0f,deerCoords.y,deerCoords.z)
+            * Matrix_Scale(DEER_SCALE, DEER_SCALE, DEER_SCALE)
+            * Matrix_Rotate_Y(PI/2.0f);
+        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(object_id_uniform, DEER);
+        DrawVirtualObject("deer");
+
+        model = Matrix_Translate(3.0f,0.0f,3.0f)
+            * Matrix_Scale(2.1f, 2.1f, 2.1f);
+        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(object_id_uniform, CAT);
+        DrawVirtualObject("cat");
+
         TextRendering_ShowEulerAngles(window);
-
-        // Imprimimos na informação sobre a matriz de projeção sendo utilizada.
         TextRendering_ShowProjection(window);
-
-        // Imprimimos na tela informação sobre o número de quadros renderizados
-        // por segundo (frames per second).
         TextRendering_ShowFramesPerSecond(window);
-
         TextRendering_ShowDirectionKey(window);
         TextRendering_ShowCameraMode(window);
-
-
-        // O framebuffer onde OpenGL executa as operações de renderização não
-        // é o mesmo que está sendo mostrado para o usuário, caso contrário
-        // seria possível ver artefatos conhecidos como "screen tearing". A
-        // chamada abaixo faz a troca dos buffers, mostrando para o usuário
-        // tudo que foi renderizado pelas funções acima.
-        // Veja o link: Veja o link: https://en.wikipedia.org/w/index.php?title=Multiple_buffering&oldid=793452829#Double_buffering_in_computer_graphics
         glfwSwapBuffers(window);
-
-        // Verificamos com o sistema operacional se houve alguma interação do
-        // usuário (teclado, mouse, ...). Caso positivo, as funções de callback
-        // definidas anteriormente usando glfwSet*Callback() serão chamadas
-        // pela biblioteca GLFW.
         glfwPollEvents();
     }
 
-    // Finalizamos o uso dos recursos do sistema operacional
     glfwTerminate();
 
-    // Fim do programa
     return 0;
 }
 
@@ -556,8 +596,8 @@ void LoadTextureImage(const char* filename)
     glGenSamplers(1, &sampler_id);
 
     // Veja slides 95-96 do documento Aula_20_Mapeamento_de_Texturas.pdf
-    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glSamplerParameteri(sampler_id, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     // Parâmetros de amostragem da textura.
     glSamplerParameteri(sampler_id, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -1241,9 +1281,17 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     // Se o usuário apertar a tecla espaço, resetamos os ângulos de Euler para zero.
     if (key == GLFW_KEY_SPACE && action == GLFW_PRESS)
     {
+        pressing_SPACE = true;
+        dinoCoords.y += 3.0f;
         g_AngleX = 0.0f;
         g_AngleY = 0.0f;
         g_AngleZ = 0.0f;
+    }
+
+    if (key == GLFW_KEY_SPACE && action == GLFW_RELEASE)
+    {
+        pressing_SPACE = false;
+        dinoCoords.y -= 3.0f;
     }
 
     // Se o usuário apertar a tecla P, utilizamos projeção perspectiva.
@@ -1268,8 +1316,6 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mod)
     if (key == GLFW_KEY_C && action == GLFW_PRESS)
     {
         g_UseFreeCamera = !g_UseFreeCamera;
-
-        if (g_UseFreeCamera) camera_position_c = glm::vec4(dinoCoords.x+g_CameraDistance, g_CameraHeight, dinoCoords.z+g_CameraDistance, 1.0f);
     }
 
     // Se o usuário apertar a tecla R, recarregamos os shaders dos arquivos "shader_fragment.glsl" e "shader_vertex.glsl".
@@ -1671,4 +1717,3 @@ void PrintObjModelInfo(ObjModel* model)
 
 // set makeprg=cd\ ..\ &&\ make\ run\ >/dev/null
 // vim: set spell spelllang=pt_br :
-

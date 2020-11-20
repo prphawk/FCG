@@ -102,8 +102,8 @@ void main()
             Kd0 = texture(TextureImage1, vec2(U,V)).rgb;
             break;
         case PLANE:
-            U = texcoords.x;
-            V = texcoords.y;
+            U = texcoords.x*100;
+            V = texcoords.y*5;
             Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
             break;
         case PENGUIN:
