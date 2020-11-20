@@ -126,12 +126,6 @@ struct SceneObject
     glm::vec3    bbox_max;
 };
 
-// Abaixo definimos variáveis globais utilizadas em várias funções do código.
-
-// A cena virtual é uma lista de objetos nomeados, guardados em um dicionário
-// (map).  Veja dentro da função BuildTrianglesAndAddToVirtualScene() como que são incluídos
-// objetos dentro da variável g_VirtualScene, e veja na função main() como
-// estes são acessados.
 std::map<std::string, SceneObject> g_VirtualScene;
 
 // Pilha que guardará as matrizes de modelagem.
@@ -154,7 +148,7 @@ bool pressing_SPACE = false;
 
 glm::vec4 dinoCoords = glm::vec4(2.0f,-1.0f,4.0f, 0.0f);
 glm::vec4 deerCoords = glm::vec4(6.0f,-1.3f,10.0f, 0.0f);
-glm::vec4 penguinCoords = glm::vec4(6.0f,-1.0f,-10.0f, 0.0f);
+glm::vec4 penguinCoords = glm::vec4(6.0f,0.5f,-10.0f, 0.0f);
 glm::vec4 coinCoords = glm::vec4(-3.0f,1.0f,3.0f, 0.f);
 
 
@@ -177,10 +171,7 @@ glm::vec4 DEFAULT_C = glm::vec4(0.0f,g_CameraHeight,-g_CameraDistance,1.0f);
 
 // Variável que controla o tipo de projeção utilizada: perspectiva ou ortográfica.
 bool g_UsePerspectiveProjection = true;
-
 bool g_UseFreeCamera = false;
-
-// Variável que controla se o texto informativo será mostrado na tela.
 bool g_ShowInfoText = true;
 
 // Variáveis que definem um programa de GPU (shaders). Veja função LoadShadersFromFiles().
@@ -668,6 +659,8 @@ void LoadShadersFromFiles()
     glUniform1i(glGetUniformLocation(program_id, "TextureImage0"), 0);
     glUniform1i(glGetUniformLocation(program_id, "TextureImage1"), 1);
     glUniform1i(glGetUniformLocation(program_id, "TextureImage2"), 2);
+    glUniform1i(glGetUniformLocation(program_id, "TextureImage3"), 3);
+
     glUseProgram(0);
 }
 
