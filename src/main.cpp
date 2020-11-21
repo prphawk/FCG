@@ -335,10 +335,9 @@ int main(int argc, char* argv[])
         deltaTime = (float)nowTime - lastTime;
         while (deltaTime >= 0.1f) {
             lastTime = nowTime;
-            deltaTime -= 0.5f;
-            //dinoCoords.x -= 0.1f;
+            deltaTime -= 0.1f;
+            penguinCoords.y -= cos(nowTime) * 0.1f;
         }
-        penguinCoords.y -= cos(nowTime) * 0.0015f;
 
         for (int i = 0; i<50; i++) coinCoords[i].y -= cos(2*nowTime) * 0.003f;
         deerCoords.x -= 0.01;
@@ -434,7 +433,7 @@ int main(int argc, char* argv[])
 
         }
 
-            if(!collision) dinoCoords += movement;
+        if(!collision) dinoCoords += movement;
 
 
         glm::mat4 model = Matrix_Identity(); // Transformação identidade de modelagem
@@ -582,12 +581,10 @@ bool AABBCollision(glm::vec4 dMax, glm::vec4 dMin, std::string key)
 
 bool SphereCollision(glm::vec4 dMax, glm::vec4 dMin, glm::vec4 center, float r)
 {
-     // get box closest point to sphere center by clamping
     float x = std::max(dMin.x, std::min(center.x, dMax.x));
     float y = std::max(dMin.y, std::min(center.y, dMax.y));
     float z = std::max(dMin.z, std::min(center.z, dMax.z));
 
-    // this is the same as isPointInsideSphere
     float distance = sqrt((x - center.x) * (x - center.x) +
                     (y - center.y) * (y - center.y) +
                     (z - center.z) * (z - center.z));

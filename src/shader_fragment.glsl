@@ -155,7 +155,10 @@ void main()
             color = Kd0 * bling_phong_illumination(Kd, Ka, Ks, I, n, l, v);
             break;
         case DEER:
-            color = gouraud_bling_phong_color;
+            U = texcoords.x;
+            V = texcoords.y;
+            Ks = vec3(1.0, 1.0, 1.0);
+            color = phong_illumination(Kd, Ka, Ks, I, n, l, v);
             break;
         case COIN:
             U = texcoords.x;
