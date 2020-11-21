@@ -150,10 +150,11 @@ bool pressing_W = false;
 bool pressing_S = false;
 bool pressing_SPACE = false;
 
-glm::vec4 dinoCoords = glm::vec4(350.0f,-1.0f,4.0f, 1.0f);
+glm::vec4 dinoCoords = glm::vec4(150.0f,-1.0f,4.0f, 1.0f);
 glm::vec4 deerCoords = glm::vec4(6.0f,-1.3f,-2.0f, 1.0f);
 glm::vec4 penguinCoords = glm::vec4(6.0f,0.5f,-10.0f, 1.0f);
-glm::vec4 coinCoords = glm::vec4(-3.0f,1.0f,0.0f, 1.0f);
+glm::vec4 coinCoords[50] = {};
+bool showCoin[50];
 
 std::map<std::string, glm::vec4> bboxCoordsMin;
 std::map<std::string, glm::vec4> bboxCoordsMax;
@@ -175,8 +176,6 @@ glm::vec4 DEFAULT_C = glm::vec4(0.0f,g_CameraHeight,-g_CameraDistance,1.0f);
 glm::vec4 camera_position_c = DEFAULT_C;
 
 bool collision = false;
-
-bool coins[50];
 
 // Variável que controla o tipo de projeção utilizada: perspectiva ou ortográfica.
 bool g_UsePerspectiveProjection = true;
@@ -322,11 +321,12 @@ int main(int argc, char* argv[])
     glm::mat4 the_model;
     glm::mat4 the_view;
 
+    for (int i = 0; i<50; i++) showCoin[i] = true;
+
 
     float lastTime = (float)glfwGetTime();
     float deltaTime = 0.0f, nowTime = 0.0f;
     bool first_iteration = false;
-    bool coindelete = false;
     // Ficamos em loop, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
@@ -339,7 +339,8 @@ int main(int argc, char* argv[])
             //dinoCoords.x -= 0.1f;
         }
         penguinCoords.y -= cos(nowTime) * 0.0015f;
-        coinCoords.y -= cos(2*nowTime) * 0.003f;
+
+        for (int i = 0; i<50; i++) coinCoords[i].y -= cos(2*nowTime) * 0.003f;
         deerCoords.x -= 0.01;
         deerCoords.z -= cos(nowTime) * 0.01f;
 
@@ -424,7 +425,9 @@ int main(int argc, char* argv[])
             if(AABBCollision(dMax, dMin, "wall1")) collision = true;
             if(AABBCollision(dMax, dMin, "wall2")) collision = true;
 
-            if(SphereCollision(dMax, dMin, coinCoords, 0.5)) coindelete = true;
+
+            // Colisão AABB-Esfera (com as moedas, que desaparecem quando encostadas em)
+            for(int i = 0; i < 50; i++) showCoin[i] = !SphereCollision(dMax, dMin, coinCoords[i], 0.5);
 
             // Colisão AABB-Plano (com o plano onde o dinossauro anda, cuja normal é correspondente ao vetor up, e cuja distância da origem é 0)
             if(PlaneCollision(dMax, dMin, glm::vec4(0.0f,1.0f,0.0f,0.0f), 0)) movement.y = 0;
@@ -518,26 +521,27 @@ int main(int argc, char* argv[])
         }
 
         float aux = 5.0f;
-
+        glm::vec4 coinC = glm::vec4(-3.0f,1.0f,0.0f,1.0f);
         for(int i = 0; i < 50; i++)
         {
-            if(!coindelete)
-            {
-                float coord_x = coinCoords.x + 15.0f * i;
+            float coord_x = coinC.x + 15.0f * i;
+            float coord_z = coinC.z + aux;
 
-                float coord_z = coinCoords.z + aux;
+            if (i%3)
+                aux=-aux;
 
-                if (i%3)
-                    aux=-aux;
+            model = Matrix_Translate(coord_x,coinC.y,coord_z)
+                    * Matrix_Scale(0.5f, 0.5f, 0.5f)
+                    * Matrix_Rotate_X(PI/2.0f)
+                    * Matrix_Rotate_Z(g_AngleZ + nowTime * 0.7f);
+            glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(object_id_uniform, COIN);
 
-                model = Matrix_Translate(coord_x,coinCoords.y,coord_z)
-                        * Matrix_Scale(0.5f, 0.5f, 0.5f)
-                        * Matrix_Rotate_X(PI/2.0f)
-                        * Matrix_Rotate_Z(g_AngleZ + nowTime * 0.7f);
-                glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-                glUniform1i(object_id_uniform, COIN);
-                DrawVirtualObject("coin", "coin", 1);
-            }
+            coinCoords[i]=glm::vec4(coord_x,coinC.y,coord_z,1.0f);
+
+            if(showCoin[i])
+                DrawVirtualObject("coin", "", 0);
+
 
         }
 
