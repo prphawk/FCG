@@ -154,8 +154,7 @@ void main()
         case DINO:
             U = texcoords.x;
             V = texcoords.y;
-            Kd0 = texture(TextureImage1, vec2(U,V)).rgb;
-            color = Kd0 * bling_phong_illumination(Kd, Ka, Ks, I, n, l, v);
+            color = bling_phong_illumination(Kd, Ka, Ks, I, n, l, v);
             break;
         case PLANE:
             U = texcoords.x*100;

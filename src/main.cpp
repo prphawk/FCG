@@ -148,8 +148,8 @@ bool pressing_W = false;
 bool pressing_S = false;
 bool pressing_SPACE = false;
 
-glm::vec4 dinoCoords = glm::vec4(2.0f,-1.0f,4.0f, 0.0f);
-glm::vec4 deerCoords = glm::vec4(6.0f,-1.3f,-2.0f, 0.0f);
+glm::vec4 dinoCoords = glm::vec4(2.0f,-1.0f,0.0f, 0.0f);
+glm::vec4 deerCoords = glm::vec4(6.0f,-1.3f,-6.0f, 0.0f);
 glm::vec4 penguinCoords = glm::vec4(6.0f,0.5f,-5.0f, 0.0f);
 glm::vec4 coinCoords = glm::vec4(-3.0f,1.0f,0.0f, 0.f);
 
@@ -518,7 +518,7 @@ int main(int argc, char* argv[])
                 glUniform1i(object_id_uniform, PENGUIN);
                 DrawVirtualObject("penguin", "penguin", 1);
 
-            model = Matrix_Translate(deerCoords.x,deerCoords.y,deerCoords.z + 4.0f * i)
+            model = Matrix_Translate(deerCoords.x,deerCoords.y,deerCoords.z + 3.0f * i)
                 * Matrix_Scale(0.006f, 0.006f, 0.006f)
                 * Matrix_Rotate_Y(PI);
             glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
