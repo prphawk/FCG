@@ -151,7 +151,7 @@ bool pressing_SPACE = false;
 glm::vec4 dinoCoords = glm::vec4(2.0f,-1.0f,4.0f, 0.0f);
 glm::vec4 deerCoords = glm::vec4(6.0f,-1.3f,-2.0f, 0.0f);
 glm::vec4 penguinCoords = glm::vec4(6.0f,0.5f,-5.0f, 0.0f);
-glm::vec4 coinCoords = glm::vec4(-3.0f,1.0f,3.0f, 0.f);
+glm::vec4 coinCoords = glm::vec4(-3.0f,1.0f,0.0f, 0.f);
 
 std::map<std::string, glm::vec4> bboxCoordsMin;
 std::map<std::string, glm::vec4> bboxCoordsMax;
@@ -193,24 +193,10 @@ GLint bbox_max_uniform;
 // Número de texturas carregadas pela função LoadTextureImage()
 GLuint g_NumLoadedTextures = 0;
 
-glm::mat4 noXMatrix = Matrix(
-    0.0f, 0.0f, 0.0f, 0.0f,
-    0.0f, 1.0f, 0.0f, 0.0f,
-    0.0f, 0.0f, 1.0f, 0.0f,
-    0.0f, 0.0f, 0.0f, 1.0f
-);
-
 glm::mat4 noYMatrix = Matrix(
     1.0f, 0.0f, 0.0f, 0.0f,
     0.0f, 0.0f, 0.0f, 0.0f,
     0.0f, 0.0f, 1.0f, 0.0f,
-    0.0f, 0.0f, 0.0f, 1.0f
-);
-
-glm::mat4 noZMatrix = Matrix(
-    1.0f, 0.0f, 0.0f, 0.0f,
-    0.0f, 1.0f, 0.0f, 0.0f,
-    0.0f, 0.0f, 0.0f, 0.0f,
     0.0f, 0.0f, 0.0f, 1.0f
 );
 
@@ -287,7 +273,6 @@ int main(int argc, char* argv[])
     LoadTextureImage("../../data/norm.png");  // TextureImage0
     LoadTextureImage("../../data/penguin.png"); // TextureImage2
     LoadTextureImage("../../data/coin-texture.jpg"); // TextureImage3
-
 
     // Construímos a representação de objetos geométricos através de malhas de triângulos
     ObjModel bunnymodel("../../data/bunny.obj");
@@ -552,28 +537,16 @@ int main(int argc, char* argv[])
             DrawVirtualObject("pedestal", "pedestal", 1);
         }
 
-        model = Matrix_Translate(3.0f,0.0f,3.0f)
-            * Matrix_Scale(2.1f, 2.1f, 2.1f);
-        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, CAT);
-        DrawVirtualObject("cat", "cat", 1);
-
         for(int i = 0; i < 5; i++) {
 
-            float coord_x = coinCoords.x + 5.0f * i;
-            float coord_z = coinCoords.z + 5.0f * i;
+            model = Matrix_Translate(coinCoords.x + 5.0f * i,coinCoords.y,coinCoords.z)
+                * Matrix_Scale(0.5f, 0.5f, 0.5f)
+                * Matrix_Rotate_X(PI/2.0f)
+                * Matrix_Rotate_Z(g_AngleZ + nowTime * 0.7f);
+            glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(object_id_uniform, COIN);
+            DrawVirtualObject("coin", "coin", 1);
 
-            if(coord_x != camera_position_c.x && coord_x != camera_position_c.x ||
-               coord_z != camera_position_c.z && coord_z != camera_position_c.z) {
-
-                model = Matrix_Translate(coord_x,coinCoords.y,coord_z)
-                    * Matrix_Scale(0.5f, 0.5f, 0.5f)
-                    * Matrix_Rotate_X(PI/2.0f)
-                    * Matrix_Rotate_Z(g_AngleZ + nowTime * 0.7f);
-                glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-                glUniform1i(object_id_uniform, COIN);
-                DrawVirtualObject("coin", "coin", 1);
-            }
         }
 
         model = Matrix_Translate(0.0f, 2.39f, 9.94f)

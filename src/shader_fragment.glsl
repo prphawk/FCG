@@ -159,7 +159,7 @@ void main()
             break;
         case PLANE:
             U = texcoords.x*100;
-            V = texcoords.y*5;
+            V = texcoords.y;
             Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
             color = Kd0 * bling_phong_illumination(Kd, Ka, Ks, I, n, l, v);
             break;
