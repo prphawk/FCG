@@ -150,10 +150,10 @@ bool pressing_W = false;
 bool pressing_S = false;
 bool pressing_SPACE = false;
 
-glm::vec4 dinoCoords = glm::vec4(2.0f,-1.0f,0.0f, 0.0f);
-glm::vec4 deerCoords = glm::vec4(6.0f,-1.3f,-6.0f, 0.0f);
-glm::vec4 penguinCoords = glm::vec4(6.0f,0.5f,-5.0f, 0.0f);
-glm::vec4 coinCoords = glm::vec4(20.0f,1.0f,0.0f, 0.f);
+glm::vec4 dinoCoords = glm::vec4(350.0f,-1.0f,4.0f, 1.0f);
+glm::vec4 deerCoords = glm::vec4(6.0f,-1.3f,-2.0f, 1.0f);
+glm::vec4 penguinCoords = glm::vec4(6.0f,0.5f,-10.0f, 1.0f);
+glm::vec4 coinCoords = glm::vec4(-3.0f,1.0f,0.0f, 1.0f);
 
 std::map<std::string, glm::vec4> bboxCoordsMin;
 std::map<std::string, glm::vec4> bboxCoordsMax;
@@ -176,6 +176,8 @@ glm::vec4 camera_position_c = DEFAULT_C;
 
 bool collision = false;
 
+bool coins[50];
+
 // Variável que controla o tipo de projeção utilizada: perspectiva ou ortográfica.
 bool g_UsePerspectiveProjection = true;
 bool g_UseFreeCamera = false;
@@ -194,13 +196,6 @@ GLint bbox_max_uniform;
 
 // Número de texturas carregadas pela função LoadTextureImage()
 GLuint g_NumLoadedTextures = 0;
-
-glm::mat4 noYMatrix = Matrix(
-    1.0f, 0.0f, 0.0f, 0.0f,
-    0.0f, 0.0f, 0.0f, 0.0f,
-    0.0f, 0.0f, 1.0f, 0.0f,
-    0.0f, 0.0f, 0.0f, 1.0f
-);
 
 int main(int argc, char* argv[])
 {
@@ -276,6 +271,7 @@ int main(int argc, char* argv[])
     LoadTextureImage("../../data/penguin.png"); // TextureImage2
     LoadTextureImage("../../data/coin-texture.jpg"); // TextureImage3
 
+
     // Construímos a representação de objetos geométricos através de malhas de triângulos
     ObjModel bunnymodel("../../data/bunny.obj");
     ComputeNormals(&bunnymodel);
@@ -297,14 +293,9 @@ int main(int argc, char* argv[])
     ComputeNormals(&deermodel);
     BuildTrianglesAndAddToVirtualScene(&deermodel);
 
-    ObjModel catmodel("../../data/cat.obj");
-    ComputeNormals(&catmodel);
-    BuildTrianglesAndAddToVirtualScene(&catmodel);
-
     ObjModel cubemodel("../../data/cube.obj");
     ComputeNormals(&cubemodel);
     BuildTrianglesAndAddToVirtualScene(&cubemodel);
-
 
     ObjModel pedestalmodel("../../data/pedestal.obj");
     ComputeNormals(&pedestalmodel);
@@ -345,6 +336,7 @@ int main(int argc, char* argv[])
         while (deltaTime >= 0.1f) {
             lastTime = nowTime;
             deltaTime -= 0.5f;
+            //dinoCoords.x -= 0.1f;
         }
         penguinCoords.y -= cos(nowTime) * 0.0015f;
         coinCoords.y -= cos(2*nowTime) * 0.003f;
@@ -408,8 +400,8 @@ int main(int argc, char* argv[])
 
             view = Matrix_Camera_View(glm::vec4(dinoCoords.x+g_CameraDistance, g_CameraHeight, dinoCoords.z, 1.0f), camera_view_vector, camera_up_vector);
 
-            if(pressing_W) movement = (noYMatrix * -w_vector) * speed;
-            if(pressing_S) movement = (noYMatrix * w_vector) * speed;
+            if(pressing_W) movement = -w_vector * speed;
+            if(pressing_S) movement = w_vector * speed;
             if(pressing_D) movement = u_vector * speed;
             if(pressing_A) movement = -u_vector * speed;
 
@@ -420,92 +412,49 @@ int main(int argc, char* argv[])
             camera_up_vector   = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
 
             view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
-
-            glm::vec4 w_vector = -camera_view_vector / norm(camera_view_vector);
-            glm::vec4 up_cross_w_vector = crossproduct(camera_up_vector, w_vector);
-            glm::vec4 u_vector = up_cross_w_vector / norm(up_cross_w_vector);
-
-            view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
-
-            if(pressing_W) movement = -w_vector * speed;
-            if(pressing_S) movement = w_vector * speed;
-            if(pressing_D) movement = u_vector * speed;
-            if(pressing_A) movement = -u_vector * speed;
         }
 
         if(!first_iteration)
         {
-            glm::vec4 dMax = Matrix_Translate(dinoCoords.x + movement.x,
-                                              dinoCoords.y + movement.y,
-                                              dinoCoords.z + movement.z)
-                                              * Matrix_Scale(2.0f, 2.0f, 2.0f)*bboxCoordsMax["dino"];
-            glm::vec4 dMin = Matrix_Translate(dinoCoords.x + movement.x,
-                                              dinoCoords.y + movement.y,
-                                              dinoCoords.z + movement.z)
-                                              * Matrix_Scale(2.0f, 2.0f, 2.0f)*bboxCoordsMin["dino"];
+            glm::vec4 dMax = Matrix_Translate(dinoCoords.x + movement.x, dinoCoords.y + movement.y, dinoCoords.z + movement.z)* Matrix_Scale(2.0f, 2.0f, 2.0f)*bboxCoordsMax["dino"];
+            glm::vec4 dMin = Matrix_Translate(dinoCoords.x + movement.x, dinoCoords.y + movement.y, dinoCoords.z + movement.z)* Matrix_Scale(2.0f, 2.0f, 2.0f)*bboxCoordsMin["dino"];
 
             if(AABBCollision(dMax, dMin, "bunny")) collision = true;
-            if(AABBCollision(dMax, dMin, "deer0")) collision = true;
-            if(AABBCollision(dMax, dMin, "deer1")) collision = true;
-            if(AABBCollision(dMax, dMin, "deer2")) collision = true;
+            if(AABBCollision(dMax, dMin, "deer")) collision = true;
             if(AABBCollision(dMax, dMin, "wall1")) collision = true;
             if(AABBCollision(dMax, dMin, "wall2")) collision = true;
 
             if(SphereCollision(dMax, dMin, coinCoords, 0.5)) coindelete = true;
 
-            //Colisão AABB-Plano (com o plano onde o dinossauro anda, cuja normal é correspondente ao vetor up, e cuja distância da origem é 0)
+            // Colisão AABB-Plano (com o plano onde o dinossauro anda, cuja normal é correspondente ao vetor up, e cuja distância da origem é 0)
             if(PlaneCollision(dMax, dMin, glm::vec4(0.0f,1.0f,0.0f,0.0f), 0)) movement.y = 0;
 
         }
 
-        if(!collision)
-            dinoCoords += movement;
+            if(!collision) dinoCoords += movement;
 
 
         glm::mat4 model = Matrix_Identity(); // Transformação identidade de modelagem
         glUniformMatrix4fv(view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
         glUniformMatrix4fv(projection_uniform , 1 , GL_FALSE , glm::value_ptr(projection));
 
-        #define SPHERE 0
-        #define BUNNY  1
-        #define PLANE  2
-        #define DINO   3
-        #define PENGUIN  4
-        #define ALLIGATOR 5
-        #define DEER 6
-        #define CLOUD 7
-        #define CAT 8
-        #define CUBE 9
-        #define COIN 10
-        #define PEDESTAL 11
-
-
+        #define BUNNY 0
+        #define PLANE  1
+        #define DINO  2
+        #define PENGUIN   3
+        #define DEER  4
+        #define CUBE 5
+        #define PEDESTAL 6
+        #define COIN 7
         #define PI 3.1415
-        // Desenhamos o modelo da esfera
-        model = Matrix_Translate(-1.0f,0.0f,0.0f)
-              * Matrix_Rotate_Z(0.6f)
-              * Matrix_Rotate_X(0.2f)
-              * Matrix_Rotate_Y(g_AngleY + nowTime * 0.1f);
-        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, SPHERE);
-        DrawVirtualObject("sphere", "", 0);
-
-        model = Matrix_Translate(dinoCoords.x,dinoCoords.y,dinoCoords.z)
-            * Matrix_Scale(0.006f, 0.006f, 0.006f)
-            * Matrix_Rotate_Y(PI);
-        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, DEER);
-        DrawVirtualObject("deer", "dino", 0);
-
         #define DEER_SCALE 0.006
-        // Desenhamos o modelo do coelho
-        model = Matrix_Translate(50.0f,0.0f,0.0f);
-              //* Matrix_Rotate_X(g_AngleX + nowTime * 0.1f);
+
+        // Desenhamos o dinossauro (câmera)
+        model = Matrix_Translate(dinoCoords.x, dinoCoords.y, dinoCoords.z)
+        * Matrix_Scale(2.0f, 2.0f, 2.0f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-        glUniform1i(object_id_uniform, BUNNY);
-        DrawVirtualObject("bunny", "bunny", 1);
-        bboxCoordsMax["bunny"] = Matrix_Translate(50.0f,0.0f,0.0f)*bboxCoordsMax["bunny"];
-        bboxCoordsMin["bunny"] = Matrix_Translate(50.0f,0.0f,0.0f)*bboxCoordsMin["bunny"];
+        glUniform1i(object_id_uniform, DINO);
+        DrawVirtualObject("dino", "dino", 1);
 
         // Desenhamos o plano do chão
         model = Matrix_Translate(0.0f,-1.1f,0.0f)
@@ -523,46 +472,6 @@ int main(int argc, char* argv[])
         bboxCoordsMax["wall1"] = model*bboxCoordsMax["wall1"];
         bboxCoordsMin["wall1"] = model*bboxCoordsMin["wall1"];
 
-
-        for(int i = 0; i < 3; i++) {
-            model = Matrix_Translate(penguinCoords.x + 8.0f * i,penguinCoords.y,penguinCoords.z)
-                * Matrix_Scale(2.0f, 2.0f, 2.0f);
-                glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-                glUniform1i(object_id_uniform, PENGUIN);
-                DrawVirtualObject("penguin", "penguin", 1);
-
-            model = Matrix_Translate(deerCoords.x,deerCoords.y,deerCoords.z + 3.0f * i)
-                * Matrix_Scale(0.006f, 0.006f, 0.006f)
-                * Matrix_Rotate_Y(PI);
-            glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-            glUniform1i(object_id_uniform, DEER);
-            DrawVirtualObject("deer", ("deer" + std::to_string(i)).c_str(), 1);
-            bboxCoordsMax[("deer" + std::to_string(i)).c_str()] = Matrix_Translate(deerCoords.x,deerCoords.y,deerCoords.z + 3.0f * i)
-                * Matrix_Scale(0.006f, 0.006f, 0.006f)*bboxCoordsMax[("deer" + std::to_string(i)).c_str()];
-            bboxCoordsMin[("deer" + std::to_string(i)).c_str()] = Matrix_Translate(deerCoords.x,deerCoords.y,deerCoords.z + 3.0f * i)
-                * Matrix_Scale(0.006f, 0.006f, 0.006f)*bboxCoordsMin[("deer" + std::to_string(i)).c_str()];
-
-
-            model = Matrix_Translate(deerCoords.x + 5.0f * i,deerCoords.y,deerCoords.z)
-                * Matrix_Scale(0.1f, 0.1f, 0.1f)
-                * Matrix_Rotate_Y(PI/2.0f);
-            glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-            glUniform1i(object_id_uniform, PEDESTAL);
-            DrawVirtualObject("pedestal", "pedestal", 1);
-        }
-
-        for(int i = 0; i < 5; i++) {
-
-            model = Matrix_Translate(coinCoords.x + 5.0f * i,coinCoords.y,coinCoords.z)
-                * Matrix_Scale(0.5f, 0.5f, 0.5f)
-                * Matrix_Rotate_X(PI/2.0f)
-                * Matrix_Rotate_Z(g_AngleZ + nowTime * 0.7f);
-            glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-            glUniform1i(object_id_uniform, COIN);
-            DrawVirtualObject("coin", "coin", 1);
-
-        }
-
         model = Matrix_Translate(0.0f, 2.39f, 9.94f)
                 * Matrix_Scale(800.0f, 7.2, 1.0f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
@@ -570,6 +479,67 @@ int main(int argc, char* argv[])
         DrawVirtualObject("cube", "wall2", 1);
         bboxCoordsMax["wall2"] = model*bboxCoordsMax["wall2"];
         bboxCoordsMin["wall2"] = model*bboxCoordsMin["wall2"];
+
+
+        // Desenha uma quantidade de obstáculos para o protagonista
+
+        // Desenhamos o modelo do coelho
+            model = Matrix_Translate(1.0f ,0.0f,0.0f);
+            glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(object_id_uniform, BUNNY);
+            DrawVirtualObject("bunny", "bunny", 1);
+            bboxCoordsMax["bunny"] = Matrix_Translate(1.0f,0.0f,0.0f)*bboxCoordsMax["bunny"];
+            bboxCoordsMin["bunny"] = Matrix_Translate(1.0f,0.0f,0.0f)*bboxCoordsMin["bunny"];
+
+        model = Matrix_Translate(penguinCoords.x + 8.0f,penguinCoords.y,penguinCoords.z)
+                    * Matrix_Scale(2.0f, 2.0f, 2.0f);
+        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(object_id_uniform, PENGUIN);
+        DrawVirtualObject("penguin", "penguin", 1);
+
+        model = Matrix_Translate(deerCoords.x + 5.0f,deerCoords.y,deerCoords.z)
+                * Matrix_Scale(0.1f, 0.1f, 0.1f)
+                * Matrix_Rotate_Y(PI/2.0f);
+        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(object_id_uniform, PEDESTAL);
+        DrawVirtualObject("pedestal", "pedestal", 1);
+
+        for(int i = 0; i < 3; i++)
+        {
+
+            model = Matrix_Translate(deerCoords.x,deerCoords.y,deerCoords.z + 4.0f * i)
+                    * Matrix_Scale(DEER_SCALE, DEER_SCALE, DEER_SCALE)
+                    * Matrix_Rotate_Y(PI);
+            glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+            glUniform1i(object_id_uniform, DEER);
+            DrawVirtualObject("deer", "deer", 1);
+            bboxCoordsMax["deer"] = model*bboxCoordsMax["deer"];
+            bboxCoordsMin["deer"] = model*bboxCoordsMin["deer"];
+        }
+
+        float aux = 5.0f;
+
+        for(int i = 0; i < 50; i++)
+        {
+            if(!coindelete)
+            {
+                float coord_x = coinCoords.x + 15.0f * i;
+
+                float coord_z = coinCoords.z + aux;
+
+                if (i%3)
+                    aux=-aux;
+
+                model = Matrix_Translate(coord_x,coinCoords.y,coord_z)
+                        * Matrix_Scale(0.5f, 0.5f, 0.5f)
+                        * Matrix_Rotate_X(PI/2.0f)
+                        * Matrix_Rotate_Z(g_AngleZ + nowTime * 0.7f);
+                glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+                glUniform1i(object_id_uniform, COIN);
+                DrawVirtualObject("coin", "coin", 1);
+            }
+
+        }
 
         TextRendering_ShowEulerAngles(window);
         TextRendering_ShowProjection(window);

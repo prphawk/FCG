@@ -22,18 +22,14 @@ uniform mat4 view;
 uniform mat4 projection;
 
 // Identificador que define qual objeto está sendo desenhado no momento
-#define SPHERE 0
-#define BUNNY  1
-#define PLANE  2
-#define DINO   3
-#define PENGUIN  4
-#define ALLIGATOR 5
-#define DEER 6
-#define CLOUD 7
-#define CAT 8
-#define CUBE 9
-#define COIN 10
-#define PEDESTAL 11
+#define BUNNY 0
+#define PLANE  1
+#define DINO  2
+#define PENGUIN   3
+#define DEER  4
+#define CUBE 5
+#define PEDESTAL 6
+#define COIN 7
 
 uniform int object_id;
 
@@ -127,18 +123,6 @@ void main()
 
     switch(object_id)
     {
-        case SPHERE :
-            vec4 bbox_center = (bbox_min + bbox_max) / 2.0;
-            vec4 p_vetor_aux = position_model - bbox_center;
-            vec4 p_linha = bbox_center + (p_vetor_aux/length(p_vetor_aux));
-            vec4 p_vetor = p_linha - bbox_center;
-            float theta = atan(p_vetor.x, p_vetor.z);
-            float phi = asin(p_vetor.y);
-            U = (theta + M_PI)/(2*M_PI);
-            V = (phi + M_PI_2)/M_PI;
-            Kd0 = texture(TextureImage0, vec2(U,V)).rgb;
-            color = Kd0 * bling_phong_illumination(Kd, Ka, Ks, I, n, l, v);
-            break;
         case BUNNY :
             float minx = bbox_min.x;
             float maxx = bbox_max.x;
