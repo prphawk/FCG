@@ -30,6 +30,8 @@ uniform mat4 projection;
 #define CUBE 5
 #define PEDESTAL 6
 #define COIN 7
+#define DEER1 8
+#define DEER2 9
 
 uniform int object_id;
 
@@ -168,6 +170,17 @@ void main()
             Kd0 = texture(TextureImage1, vec2(U,V)).rgb;
             Ks = vec3(1.0, 1.0, 1.0);
             color = Kd0 * bling_phong_illumination(Kd, Ka, Ks, I, n, l, v);
+            break;
+        case DEER1:
+            U = texcoords.x;
+            V = texcoords.y;
+            color = gouraud_bling_phong_color;
+            break;
+        case DEER2:
+            U = texcoords.x;
+            V = texcoords.y;
+            Ks = vec3(1.0, 1.0, 1.0);
+            color = bling_phong_illumination(Kd, Ka, Ks, I, n, l, v);
             break;
     }
 

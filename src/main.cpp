@@ -152,7 +152,7 @@ bool pressing_SPACE = false;
 
 glm::vec4 dinoCoords = glm::vec4(150.0f,-1.0f,4.0f, 1.0f);
 glm::vec4 deerCoords = glm::vec4(6.0f,-1.3f,-2.0f, 1.0f);
-glm::vec4 penguinCoords = glm::vec4(6.0f,0.5f,-10.0f, 1.0f);
+glm::vec4 penguinCoords = glm::vec4(6.0f,0.5f,-3.0f, 1.0f);
 glm::vec4 coinCoords[50] = {};
 bool showCoin[50];
 
@@ -449,6 +449,9 @@ int main(int argc, char* argv[])
         #define CUBE 5
         #define PEDESTAL 6
         #define COIN 7
+        #define DEER1 8
+        #define DEER2 9
+
         #define PI 3.1415
         #define DEER_SCALE 0.006
 
@@ -507,18 +510,29 @@ int main(int argc, char* argv[])
         glUniform1i(object_id_uniform, PEDESTAL);
         DrawVirtualObject("pedestal", "pedestal", 1);
 
-        for(int i = 0; i < 3; i++)
-        {
+        model = Matrix_Translate(deerCoords.x,deerCoords.y,deerCoords.z)
+                * Matrix_Scale(DEER_SCALE, DEER_SCALE, DEER_SCALE)
+                * Matrix_Rotate_Y(PI);
+        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(object_id_uniform, DEER);
+        DrawVirtualObject("deer", "deer", 1);
+        bboxCoordsMax["deer"] = model*bboxCoordsMax["deer"];
+        bboxCoordsMin["deer"] = model*bboxCoordsMin["deer"];
 
-            model = Matrix_Translate(deerCoords.x,deerCoords.y,deerCoords.z + 4.0f * i)
-                    * Matrix_Scale(DEER_SCALE, DEER_SCALE, DEER_SCALE)
-                    * Matrix_Rotate_Y(PI);
-            glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
-            glUniform1i(object_id_uniform, DEER);
-            DrawVirtualObject("deer", "deer", 1);
-            bboxCoordsMax["deer"] = model*bboxCoordsMax["deer"];
-            bboxCoordsMin["deer"] = model*bboxCoordsMin["deer"];
-        }
+
+        model = Matrix_Translate(20.0f, deerCoords.y, -2.0f)
+                * Matrix_Scale(DEER_SCALE, DEER_SCALE, DEER_SCALE)
+                * Matrix_Rotate_Y(PI);
+        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(object_id_uniform, DEER1);
+        DrawVirtualObject("deer", "", 0);
+
+        model = Matrix_Translate(20.0f, deerCoords.y, 2.0f)
+                * Matrix_Scale(DEER_SCALE, DEER_SCALE, DEER_SCALE)
+                * Matrix_Rotate_Y(PI);
+        glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
+        glUniform1i(object_id_uniform, DEER2);
+        DrawVirtualObject("deer", "", 0);
 
         float aux = 5.0f;
         glm::vec4 coinC = glm::vec4(-3.0f,1.0f,0.0f,1.0f);
