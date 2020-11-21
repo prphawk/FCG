@@ -114,6 +114,8 @@ void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
 void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
 bool AABBCollision(glm::vec4 dMax, glm::vec4 dMin, std::string key);
+bool SphereCollision(glm::vec4 dMax, glm::vec4 dMin, glm::vec4 center, float r);
+bool PlaneCollision(glm::vec4 dMax, glm::vec4 dMin, glm::vec4 normal, float distance);
 
 // Definimos uma estrutura que armazenará dados necessários para renderizar
 // cada objeto da cena virtual.
@@ -151,7 +153,7 @@ bool pressing_SPACE = false;
 glm::vec4 dinoCoords = glm::vec4(2.0f,-1.0f,0.0f, 0.0f);
 glm::vec4 deerCoords = glm::vec4(6.0f,-1.3f,-6.0f, 0.0f);
 glm::vec4 penguinCoords = glm::vec4(6.0f,0.5f,-5.0f, 0.0f);
-glm::vec4 coinCoords = glm::vec4(-3.0f,1.0f,0.0f, 0.f);
+glm::vec4 coinCoords = glm::vec4(20.0f,1.0f,0.0f, 0.f);
 
 std::map<std::string, glm::vec4> bboxCoordsMin;
 std::map<std::string, glm::vec4> bboxCoordsMax;
@@ -333,6 +335,7 @@ int main(int argc, char* argv[])
     float lastTime = (float)glfwGetTime();
     float deltaTime = 0.0f, nowTime = 0.0f;
     bool first_iteration = false;
+    bool coindelete = false;
     // Ficamos em loop, renderizando, até que o usuário feche a janela
     while (!glfwWindowShouldClose(window))
     {
@@ -342,7 +345,6 @@ int main(int argc, char* argv[])
         while (deltaTime >= 0.1f) {
             lastTime = nowTime;
             deltaTime -= 0.5f;
-            //dinoCoords.x -= 0.1f;
         }
         penguinCoords.y -= cos(nowTime) * 0.0015f;
         coinCoords.y -= cos(2*nowTime) * 0.003f;
@@ -392,6 +394,8 @@ int main(int argc, char* argv[])
             projection = Matrix_Orthographic(l, r, b, t, nearplane, farplane);
         }
 
+        glm::vec4 movement = glm::vec4(0.0f,0.0f,0.0f,0.0f);
+
         if(g_UseFreeCamera) {
 
             camera_up_vector = glm::vec4(0.0f,1.0f,0.0f,0.0f); // Vetor "up" fixado para apontar para o "céu" (eito Y global)
@@ -404,25 +408,10 @@ int main(int argc, char* argv[])
 
             view = Matrix_Camera_View(glm::vec4(dinoCoords.x+g_CameraDistance, g_CameraHeight, dinoCoords.z, 1.0f), camera_view_vector, camera_up_vector);
 
-            glm::vec4 movement = glm::vec4(0.0f,0.0f,0.0f,0.0f);
-
             if(pressing_W) movement = (noYMatrix * -w_vector) * speed;
             if(pressing_S) movement = (noYMatrix * w_vector) * speed;
             if(pressing_D) movement = u_vector * speed;
             if(pressing_A) movement = -u_vector * speed;
-
-            glm::vec4 dMax = Matrix_Translate(dinoCoords.x + movement.x, dinoCoords.y + movement.y, dinoCoords.z + movement.z)* Matrix_Scale(2.0f, 2.0f, 2.0f)*bboxCoordsMax["dino"];
-            glm::vec4 dMin = Matrix_Translate(dinoCoords.x + movement.x, dinoCoords.y + movement.y, dinoCoords.z + movement.z)* Matrix_Scale(2.0f, 2.0f, 2.0f)*bboxCoordsMin["dino"];
-
-                if(AABBCollision(dMax, dMin, "bunny")) collision = true;
-                if(AABBCollision(dMax, dMin, "deer0")) collision = true;
-                if(AABBCollision(dMax, dMin, "deer1")) collision = true;
-                if(AABBCollision(dMax, dMin, "deer2")) collision = true;
-                if(AABBCollision(dMax, dMin, "wall1")) collision = true;
-                if(AABBCollision(dMax, dMin, "wall2")) collision = true;
-
-            if(!collision) dinoCoords += movement;
-            //else dinoCoords -= movement;
 
         } else {
 
@@ -438,16 +427,40 @@ int main(int argc, char* argv[])
 
             view = Matrix_Camera_View(camera_position_c, camera_view_vector, camera_up_vector);
 
-            glm::vec4 movement = glm::vec4(0.0f,0.0f,0.0f,0.0f);
-
-            if(pressing_W) movement = (noYMatrix * -w_vector) * speed;
-            if(pressing_S) movement = (noYMatrix * w_vector) * speed;
+            if(pressing_W) movement = -w_vector * speed;
+            if(pressing_S) movement = w_vector * speed;
             if(pressing_D) movement = u_vector * speed;
             if(pressing_A) movement = -u_vector * speed;
-
-            if(!collision) dinoCoords += movement;
-            //else dinoCoords -= movement;
         }
+
+        if(!first_iteration)
+        {
+            glm::vec4 dMax = Matrix_Translate(dinoCoords.x + movement.x,
+                                              dinoCoords.y + movement.y,
+                                              dinoCoords.z + movement.z)
+                                              * Matrix_Scale(2.0f, 2.0f, 2.0f)*bboxCoordsMax["dino"];
+            glm::vec4 dMin = Matrix_Translate(dinoCoords.x + movement.x,
+                                              dinoCoords.y + movement.y,
+                                              dinoCoords.z + movement.z)
+                                              * Matrix_Scale(2.0f, 2.0f, 2.0f)*bboxCoordsMin["dino"];
+
+            if(AABBCollision(dMax, dMin, "bunny")) collision = true;
+            if(AABBCollision(dMax, dMin, "deer0")) collision = true;
+            if(AABBCollision(dMax, dMin, "deer1")) collision = true;
+            if(AABBCollision(dMax, dMin, "deer2")) collision = true;
+            if(AABBCollision(dMax, dMin, "wall1")) collision = true;
+            if(AABBCollision(dMax, dMin, "wall2")) collision = true;
+
+            if(SphereCollision(dMax, dMin, coinCoords, 0.5)) coindelete = true;
+
+            //Colisão AABB-Plano (com o plano onde o dinossauro anda, cuja normal é correspondente ao vetor up, e cuja distância da origem é 0)
+            if(PlaneCollision(dMax, dMin, glm::vec4(0.0f,1.0f,0.0f,0.0f), 0)) movement.y = 0;
+
+        }
+
+        if(!collision)
+            dinoCoords += movement;
+
 
         glm::mat4 model = Matrix_Identity(); // Transformação identidade de modelagem
         glUniformMatrix4fv(view_uniform       , 1 , GL_FALSE , glm::value_ptr(view));
@@ -486,13 +499,13 @@ int main(int argc, char* argv[])
 
         #define DEER_SCALE 0.006
         // Desenhamos o modelo do coelho
-        model = Matrix_Translate(1.0f,0.0f,0.0f);
+        model = Matrix_Translate(50.0f,0.0f,0.0f);
               //* Matrix_Rotate_X(g_AngleX + nowTime * 0.1f);
         glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
         glUniform1i(object_id_uniform, BUNNY);
         DrawVirtualObject("bunny", "bunny", 1);
-        bboxCoordsMax["bunny"] = Matrix_Translate(1.0f,0.0f,0.0f)*bboxCoordsMax["bunny"];
-        bboxCoordsMin["bunny"] = Matrix_Translate(1.0f,0.0f,0.0f)*bboxCoordsMin["bunny"];
+        bboxCoordsMax["bunny"] = Matrix_Translate(50.0f,0.0f,0.0f)*bboxCoordsMax["bunny"];
+        bboxCoordsMin["bunny"] = Matrix_Translate(50.0f,0.0f,0.0f)*bboxCoordsMin["bunny"];
 
         // Desenhamos o plano do chão
         model = Matrix_Translate(0.0f,-1.1f,0.0f)
@@ -524,9 +537,10 @@ int main(int argc, char* argv[])
             glUniformMatrix4fv(model_uniform, 1 , GL_FALSE , glm::value_ptr(model));
             glUniform1i(object_id_uniform, DEER);
             DrawVirtualObject("deer", ("deer" + std::to_string(i)).c_str(), 1);
-            bboxCoordsMax[("deer" + std::to_string(i)).c_str()] = model*bboxCoordsMax[("deer" + std::to_string(i)).c_str()];
-            bboxCoordsMin[("deer" + std::to_string(i)).c_str()] = model*bboxCoordsMin[("deer" + std::to_string(i)).c_str()];
-
+            bboxCoordsMax[("deer" + std::to_string(i)).c_str()] = Matrix_Translate(deerCoords.x,deerCoords.y,deerCoords.z + 3.0f * i)
+                * Matrix_Scale(0.006f, 0.006f, 0.006f)*bboxCoordsMax[("deer" + std::to_string(i)).c_str()];
+            bboxCoordsMin[("deer" + std::to_string(i)).c_str()] = Matrix_Translate(deerCoords.x,deerCoords.y,deerCoords.z + 3.0f * i)
+                * Matrix_Scale(0.006f, 0.006f, 0.006f)*bboxCoordsMin[("deer" + std::to_string(i)).c_str()];
 
 
             model = Matrix_Translate(deerCoords.x + 5.0f * i,deerCoords.y,deerCoords.z)
@@ -576,6 +590,34 @@ bool AABBCollision(glm::vec4 dMax, glm::vec4 dMin, std::string key)
     return ((dMin.x <= bboxCoordsMax[key].x && dMax.x >= bboxCoordsMin[key].x) &&
                     (dMin.y <= bboxCoordsMax[key].y && dMax.y >= bboxCoordsMin[key].y) &&
                     (dMin.z <= bboxCoordsMax[key].z && dMax.z >= bboxCoordsMin[key].z));
+}
+
+bool SphereCollision(glm::vec4 dMax, glm::vec4 dMin, glm::vec4 center, float r)
+{
+     // get box closest point to sphere center by clamping
+    float x = std::max(dMin.x, std::min(center.x, dMax.x));
+    float y = std::max(dMin.y, std::min(center.y, dMax.y));
+    float z = std::max(dMin.z, std::min(center.z, dMax.z));
+
+    // this is the same as isPointInsideSphere
+    float distance = sqrt((x - center.x) * (x - center.x) +
+                    (y - center.y) * (y - center.y) +
+                    (z - center.z) * (z - center.z));
+
+    return (distance < r);
+}
+
+bool PlaneCollision(glm::vec4 dMax, glm::vec4 dMin, glm::vec4 normal, float distance)
+{
+    float x = (dMax.x - dMin.x)/2;
+    float y = (dMax.y - dMin.y)/2;
+    float z = (dMax.z - dMin.z)/2;
+
+    float projection = x * fabsf(normal.x) +
+                       y * fabsf(normal.y) +
+                       z * fabsf(normal.z);
+
+    return fabsf(dotproduct(normal, glm::vec4(dinoCoords.x, dinoCoords.y, dinoCoords.z, 0.0f)) - distance) <= projection;
 }
 
 // Função que carrega uma imagem para ser utilizada como textura
